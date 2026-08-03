@@ -1,0 +1,10 @@
+node_modules
+dist
+dev-dist
+.DS_Store
+*.local
+
+# Projectgeheugen blijft lokaal: deze repo is publiek.
+HISTORY.md
+
+.deploy

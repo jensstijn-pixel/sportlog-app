@@ -1,0 +1,112 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-bg: #0b0c0e;
+  --color-kaart: #15171b;
+  --color-tekst: #f3f4f1;
+  --color-notitie: #e9eae5;
+  --color-accent: #c8f542;
+
+  --font-sans: Archivo, system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, Menlo, monospace;
+}
+
+/* Archivo variable, lokaal gebundeld zodat de app ook offline goed oogt. */
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/sportlog-app/fonts/archivo.woff2') format('woff2');
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* De app is voor een telefoon ontworpen; op een breder scherm blijft hij
+   gecentreerd in plaats van uit te rekken. */
+#root {
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+/* Alles hieronder in @layer base: ongelaagde CSS zou anders van de
+   Tailwind-utilities winnen (v4 zet die in een layer). */
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-tekst);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+  }
+
+  input,
+  textarea,
+  button {
+    font-family: inherit;
+    color: inherit;
+  }
+
+  textarea,
+  input {
+    background: transparent;
+    border: 0;
+    outline: none;
+  }
+
+  textarea::placeholder,
+  input::placeholder {
+    color: rgba(243, 244, 241, 0.3);
+  }
+
+  button {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@keyframes caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .kaart {
+    background: var(--color-kaart);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .ai-kaart {
+    background: linear-gradient(135deg, #15171b, #1a1e15);
+    border: 1px solid rgba(200, 245, 66, 0.2);
+  }
+
+  /* Verbergt de scrollbar maar houdt scrollen intact (kalender, chiprij). */
+  .geen-balk {
+    scrollbar-width: none;
+  }
+  .geen-balk::-webkit-scrollbar {
+    display: none;
+  }
+}
