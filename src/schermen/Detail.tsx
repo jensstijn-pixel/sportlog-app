@@ -2,6 +2,17 @@ import { CHIP_LABELS, TYPE_LABELS, type Notitie, type Signaal } from '../types'
 import { eyebrowDatum } from '../lib/datum'
 import { AiKaart, Eyebrow, TypeBadge } from '../onderdelen/ui'
 
+// De soorten die notitie_signalen.py teruggeeft, in leesbaar Nederlands.
+const SOORT_LABELS: Record<string, string> = {
+  overgeslagen: 'overgeslagen',
+  onderbroken: 'onderbroken',
+  pijn: 'pijn',
+  te_zwaar: 'te zwaar',
+  te_licht: 'te licht',
+  goed: 'ging goed',
+  anders: 'let op',
+}
+
 export default function Detail({
   notitie,
   signaal,
@@ -68,7 +79,7 @@ export default function Detail({
                 {signaal.vlaggen.map((v, i) => (
                   <li key={i} className="text-tekst/75">
                     <span className="text-accent">·</span> {v.oefening ? `${v.oefening} — ` : ''}
-                    {v.soort}
+                    {SOORT_LABELS[v.soort] ?? v.soort}
                     {v.reden ? ` (${v.reden})` : ''}
                     {v.actie ? ` → ${v.actie}` : ''}
                   </li>

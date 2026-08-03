@@ -148,8 +148,9 @@ export default function Inzicht({
 
       {laatsteAntwoord && (
         <div className="kaart mt-3 rounded-[16px] p-4">
-          <div className="text-[11px] uppercase tracking-[0.08em] text-tekst/45">
-            Je vroeg: {laatsteAntwoord.vraag}
+          <div className="text-[11px] uppercase tracking-[0.08em] text-tekst/45">Je vroeg</div>
+          <div className="mt-1 text-[13px] leading-[1.45] text-tekst/60">
+            {laatsteAntwoord.vraag}
           </div>
           <p className="mt-2 whitespace-pre-wrap text-[14px] leading-[1.55] text-tekst/80">
             {laatsteAntwoord.antwoord}
