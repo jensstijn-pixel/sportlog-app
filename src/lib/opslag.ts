@@ -1,4 +1,4 @@
-import type { Notitie, OpenVraag, Signaal, Weekoverzicht } from '../types'
+import type { Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -10,6 +10,9 @@ const K = {
   vraag: 'sportlog.vraag',
   signalen: 'sportlog.signalen',
   gesteldeVragen: 'sportlog.gesteldeVragen',
+  taken: 'sportlog.taken',
+  takenWachtrij: 'sportlog.takenWachtrij',
+  verrijking: 'sportlog.verrijking',
 }
 
 export interface Instellingen {
@@ -60,6 +63,38 @@ export const opslag = {
    *  tot het antwoord binnen is. */
   gesteldeVragen: () => lees<{ vraag: string; op: string }[]>(K.gesteldeVragen, []),
   zetGesteldeVragen: (v: { vraag: string; op: string }[]) => schrijf(K.gesteldeVragen, v),
+
+  taken: () => lees<Taak[]>(K.taken, []),
+  zetTaken: (t: Taak[]) => schrijf(K.taken, t),
+
+  takenWachtrij: () => lees<string[]>(K.takenWachtrij, []),
+  zetTakenWachtrij: (ids: string[]) => schrijf(K.takenWachtrij, ids),
+
+  /** Categorie en prioriteit per taak-id, ingevuld door de Mac. */
+  verrijking: () => lees<Record<string, Verrijking>>(K.verrijking, {}),
+  zetVerrijking: (v: Record<string, Verrijking>) => schrijf(K.verrijking, v),
+}
+
+/** Taak toevoegen of bijwerken; retourneert de nieuwe lijst (nieuwste eerst). */
+export function bewaarTaak(taak: Taak): Taak[] {
+  const bestaand = opslag.taken()
+  const index = bestaand.findIndex((t) => t.id === taak.id)
+  const nieuw = index >= 0
+    ? bestaand.map((t) => (t.id === taak.id ? taak : t))
+    : [taak, ...bestaand]
+  nieuw.sort((a, b) => (a.gemaakt < b.gemaakt ? 1 : -1))
+  opslag.zetTaken(nieuw)
+
+  const wachtrij = opslag.takenWachtrij()
+  if (!wachtrij.includes(taak.id)) opslag.zetTakenWachtrij([...wachtrij, taak.id])
+  return nieuw
+}
+
+export function verwijderTaak(id: string): Taak[] {
+  const nieuw = opslag.taken().filter((t) => t.id !== id)
+  opslag.zetTaken(nieuw)
+  opslag.zetTakenWachtrij(opslag.takenWachtrij().filter((w) => w !== id))
+  return nieuw
 }
 
 /** Notitie toevoegen of bijwerken; retourneert de nieuwe lijst (nieuwste eerst). */

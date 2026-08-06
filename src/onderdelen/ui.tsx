@@ -116,6 +116,53 @@ export function Eyebrow({ children, accent = false }: { children: ReactNode; acc
   return <div className={`eyebrow ${accent ? 'text-accent' : 'text-tekst/50'}`}>{children}</div>
 }
 
+export type TabNaam = 'logboek' | 'taken' | 'inzicht'
+
+/** Vaste balk onderaan. De app is meer dan een sportlogboek geworden, dus je
+ *  moet tussen de onderdelen kunnen springen zonder eerst terug te navigeren. */
+export function TabBalk({
+  actief,
+  aantalTaken = 0,
+  onKies,
+}: {
+  actief: TabNaam
+  aantalTaken?: number
+  onKies: (tab: TabNaam) => void
+}) {
+  const tabs: { naam: TabNaam; label: string; teken: string }[] = [
+    { naam: 'logboek', label: 'Logboek', teken: '▤' },
+    { naam: 'taken', label: 'To-do', teken: '✓' },
+    { naam: 'inzicht', label: 'Inzicht', teken: '✦' },
+  ]
+  return (
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/8 bg-bg/92 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+      <div className="mx-auto flex max-w-md">
+        {tabs.map((t) => {
+          const aan = t.naam === actief
+          return (
+            <button
+              key={t.naam}
+              type="button"
+              onClick={() => onKies(t.naam)}
+              className={`relative flex flex-1 flex-col items-center gap-0.5 py-2.5 ${
+                aan ? 'text-accent' : 'text-tekst/40'
+              }`}
+            >
+              <span className="text-[17px] leading-none">{t.teken}</span>
+              <span className="text-[10px] font-semibold tracking-[0.04em]">{t.label}</span>
+              {t.naam === 'taken' && aantalTaken > 0 && (
+                <span className="absolute right-[22%] top-1.5 min-w-[16px] rounded-full bg-accent px-1 text-[9px] font-extrabold leading-[16px] text-bg">
+                  {aantalTaken}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}
+
 export function Titel({ children }: { children: ReactNode }) {
   return <h1 className="text-[32px] font-extrabold tracking-[-0.02em]">{children}</h1>
 }

@@ -8,7 +8,7 @@ import {
   parseISO,
   vandaagISO,
 } from '../lib/datum'
-import { Eyebrow, RondeKnop, Titel, TypeBadge } from '../onderdelen/ui'
+import { Eyebrow, RondeKnop, TabBalk, Titel, TypeBadge } from '../onderdelen/ui'
 
 export interface SyncStatus {
   tekst: string
@@ -22,6 +22,8 @@ export default function Logboek({
   onOpen,
   onInzicht,
   onInstellingen,
+  openTaken,
+  onTaken,
 }: {
   notities: Notitie[]
   status: SyncStatus
@@ -29,6 +31,8 @@ export default function Logboek({
   onOpen: (n: Notitie) => void
   onInzicht: () => void
   onInstellingen: () => void
+  openTaken: number
+  onTaken: () => void
 }) {
   const vandaag = vandaagISO()
   const [zichtbaar, setZichtbaar] = useState(() => {
@@ -61,7 +65,7 @@ export default function Logboek({
     status.soort === 'aandacht' ? 'text-accent' : status.soort === 'bezig' ? 'text-tekst/50' : 'text-tekst/35'
 
   return (
-    <div className="min-h-dvh px-5 pt-[calc(env(safe-area-inset-top)+18px)] pb-32">
+    <div className="min-h-dvh px-5 pt-[calc(env(safe-area-inset-top)+18px)] pb-40">
       <div className="flex items-end justify-between">
         <div>
           <Titel>Logboek</Titel>
@@ -154,7 +158,7 @@ export default function Logboek({
         </div>
       )}
 
-      <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+22px)] flex justify-center">
+      <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+74px)] z-10 flex justify-center">
         <button
           type="button"
           onClick={onNieuw}
@@ -163,6 +167,15 @@ export default function Logboek({
           <span className="text-[17px]">+</span> Nieuwe notitie
         </button>
       </div>
+
+      <TabBalk
+        actief="logboek"
+        aantalTaken={openTaken}
+        onKies={(tab) => {
+          if (tab === 'taken') onTaken()
+          if (tab === 'inzicht') onInzicht()
+        }}
+      />
     </div>
   )
 }

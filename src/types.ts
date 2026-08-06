@@ -69,3 +69,42 @@ export interface OpenVraag {
   /** Waar de vraag over gaat, puur ter herkenning. */
   context?: string
 }
+
+export type Categorie = 'prive' | 'project' | 'huis' | 'admin' | 'overig'
+
+export const CATEGORIE_LABELS: Record<Categorie, string> = {
+  prive: 'Privé',
+  project: 'Project',
+  huis: 'Huis',
+  admin: 'Admin',
+  overig: 'Overig',
+}
+
+/** Een losse taak: je dumpt 'm onbewerkt, de Mac verrijkt hem 's ochtends.
+ *
+ *  Bewust gescheiden van de verrijking (zie Verrijking): de app schrijft
+ *  taken/<id>.json, de Mac schrijft taken/verrijking.json. Zo raken ze elkaars
+ *  bestanden nooit en kunnen telefoon en Mac tegelijk werken — hetzelfde
+ *  principe als notities/ versus signalen/. */
+export interface Taak {
+  id: string
+  tekst: string
+  /** ISO 8601, moment van invoeren */
+  gemaakt: string
+  klaar: boolean
+  /** ISO 8601, moment van afvinken */
+  klaarOp?: string
+  bijgewerkt: string
+}
+
+/** Wat de Mac van een taak maakte (taken/verrijking.json, per taak-id). */
+export interface Verrijking {
+  categorie: Categorie
+  /** 1 = eerst doen, 3 = mag wachten */
+  prioriteit: 1 | 2 | 3
+  /** Waarom deze prioriteit — zodat het geen black box is. */
+  toelichting?: string
+  /** YYYY-MM-DD: de dag waarop hij in de ochtendbrief staat. */
+  gepland?: string
+  verwerkt_op?: string
+}

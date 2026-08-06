@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Notitie } from './types'
-import { bewaarNotitie, opslag, verwijderNotitie } from './lib/opslag'
-import { haalTerug, stelVraag, syncWachtrij } from './lib/github'
+import type { Notitie, Taak } from './types'
+import { bewaarNotitie, bewaarTaak, nieuwId, opslag, verwijderNotitie, verwijderTaak } from './lib/opslag'
+import { haalTerug, stelVraag, syncTaken, syncWachtrij } from './lib/github'
+import { nuISO } from './lib/datum'
 import Logboek, { type SyncStatus } from './schermen/Logboek'
 import Editor from './schermen/Editor'
 import Detail from './schermen/Detail'
 import Inzicht from './schermen/Inzicht'
 import Instellingen from './schermen/Instellingen'
+import Taken from './schermen/Taken'
 
 type Scherm =
   | { naam: 'logboek' }
@@ -14,24 +16,29 @@ type Scherm =
   | { naam: 'detail'; id: string }
   | { naam: 'inzicht' }
   | { naam: 'instellingen' }
+  | { naam: 'taken' }
 
 export default function App() {
   const [scherm, setScherm] = useState<Scherm>({ naam: 'logboek' })
   const [notities, setNotities] = useState<Notitie[]>(() => opslag.notities())
-  const [wachtend, setWachtend] = useState(() => opslag.wachtrij().length)
+  const [taken, setTaken] = useState<Taak[]>(() => opslag.taken())
+  const [wachtend, setWachtend] = useState(
+    () => opslag.wachtrij().length + opslag.takenWachtrij().length,
+  )
   const [syncBezig, setSyncBezig] = useState(false)
   const [syncFout, setSyncFout] = useState<string | undefined>()
   const [afgeleid, setAfgeleid] = useState(0) // triggert herlezen van signalen/overzichten
 
   const synchroniseer = useCallback(async () => {
     if (!opslag.instellingen().token) {
-      setWachtend(opslag.wachtrij().length)
+      setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
       return
     }
     setSyncBezig(true)
-    const resultaat = await syncWachtrij()
-    setWachtend(resultaat.wachtend)
-    setSyncFout(resultaat.fout)
+    const notitieResultaat = await syncWachtrij()
+    const taakResultaat = await syncTaken()
+    setWachtend(notitieResultaat.wachtend + taakResultaat.wachtend)
+    setSyncFout(notitieResultaat.fout ?? taakResultaat.fout)
     try {
       await haalTerug()
       setAfgeleid((n) => n + 1)
@@ -55,15 +62,34 @@ export default function App() {
 
   function opslaan(notitie: Notitie) {
     setNotities(bewaarNotitie(notitie))
-    setWachtend(opslag.wachtrij().length)
+    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
     setScherm({ naam: 'logboek' })
     void synchroniseer()
   }
 
   function verwijder(id: string) {
     setNotities(verwijderNotitie(id))
-    setWachtend(opslag.wachtrij().length)
+    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
     setScherm({ naam: 'logboek' })
+  }
+
+  function taakToevoegen(tekst: string) {
+    const nu = nuISO()
+    setTaken(bewaarTaak({ id: nieuwId(), tekst, gemaakt: nu, klaar: false, bijgewerkt: nu }))
+    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+    void synchroniseer()
+  }
+
+  function taakAfvinken(taak: Taak, klaar: boolean) {
+    const nu = nuISO()
+    setTaken(bewaarTaak({ ...taak, klaar, klaarOp: klaar ? nu : undefined, bijgewerkt: nu }))
+    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+    void synchroniseer()
+  }
+
+  function taakVerwijderen(id: string) {
+    setTaken(verwijderTaak(id))
+    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
   }
 
   const status: SyncStatus = !opslag.instellingen().token
@@ -124,8 +150,23 @@ export default function App() {
           onTerug={() => setScherm({ naam: 'logboek' })}
           onGewijzigd={() => {
             setNotities(opslag.notities())
+            setTaken(opslag.taken())
             void synchroniseer()
           }}
+        />
+      )
+
+    case 'taken':
+      return (
+        <Taken
+          key={afgeleid}
+          taken={taken}
+          verrijking={opslag.verrijking()}
+          onToevoegen={taakToevoegen}
+          onAfvinken={taakAfvinken}
+          onVerwijder={taakVerwijderen}
+          onTerug={() => setScherm({ naam: 'logboek' })}
+          onInzicht={() => setScherm({ naam: 'inzicht' })}
         />
       )
 
@@ -134,10 +175,12 @@ export default function App() {
         <Logboek
           notities={notities}
           status={status}
+          openTaken={taken.filter((t) => !t.klaar).length}
           onNieuw={() => setScherm({ naam: 'editor' })}
           onOpen={(n) => setScherm({ naam: 'detail', id: n.id })}
           onInzicht={() => setScherm({ naam: 'inzicht' })}
           onInstellingen={() => setScherm({ naam: 'instellingen' })}
+          onTaken={() => setScherm({ naam: 'taken' })}
         />
       )
   }

@@ -1,4 +1,4 @@
-import type { Notitie, OpenVraag, Signaal, Weekoverzicht } from '../types'
+import type { Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 import { nuISO, weekJaar, weeknummer } from './datum'
 import { opslag, type Instellingen } from './opslag'
 
@@ -156,7 +156,44 @@ export async function syncWachtrij(): Promise<SyncResultaat> {
   return { verzonden, wachtend: opslag.wachtrij().length, fout: restfout }
 }
 
-/** Haalt op wat de Mac heeft teruggeschreven: signalen, weekoverzicht, open vraag. */
+/** Werkt de takenwachtrij af. Zelfde opzet als syncWachtrij: één bestand per
+ *  taak, zodat de Mac er tegelijk in kan werken. */
+export async function syncTaken(): Promise<SyncResultaat> {
+  const inst = opslag.instellingen()
+  const wachtrij = opslag.takenWachtrij()
+  if (!inst.token) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Nog niet gekoppeld.' }
+  if (!wachtrij.length) return { verzonden: 0, wachtend: 0 }
+  if (!navigator.onLine) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Offline.' }
+
+  const taken = opslag.taken()
+  let verzonden = 0
+  let restfout: string | undefined
+
+  for (const id of [...wachtrij]) {
+    const taak = taken.find((t) => t.id === id)
+    if (!taak) {
+      opslag.zetTakenWachtrij(opslag.takenWachtrij().filter((w) => w !== id))
+      continue
+    }
+    try {
+      await schrijfBestand(
+        inst,
+        `taken/${id}.json`,
+        JSON.stringify(taak, null, 2) + '\n',
+        taak.klaar ? `Taak klaar: ${taak.tekst.slice(0, 40)}` : `Taak: ${taak.tekst.slice(0, 40)}`,
+      )
+      opslag.zetTakenWachtrij(opslag.takenWachtrij().filter((w) => w !== id))
+      verzonden++
+    } catch (e) {
+      restfout = e instanceof Error ? e.message : 'Onbekende fout.'
+      break
+    }
+  }
+  return { verzonden, wachtend: opslag.takenWachtrij().length, fout: restfout }
+}
+
+/** Haalt op wat de Mac heeft teruggeschreven: signalen, weekoverzicht, open
+ *  vraag en de prioritering van de taken. */
 export async function haalTerug(): Promise<void> {
   const inst = opslag.instellingen()
   if (!inst.token || !navigator.onLine) return
@@ -164,15 +201,45 @@ export async function haalTerug(): Promise<void> {
   const nu = new Date()
   const sleutel = `${weekJaar(nu)}-${String(weeknummer(nu)).padStart(2, '0')}`
 
-  const [signalen, overzicht, vraag] = await Promise.all([
+  const [signalen, overzicht, vraag, verrijking] = await Promise.all([
     leesJson<Record<string, Signaal>>(inst, 'signalen/laatste.json').catch(() => null),
     leesJson<Weekoverzicht>(inst, `overzicht/week-${sleutel}.json`).catch(() => null),
     leesJson<OpenVraag>(inst, 'vraag/open.json').catch(() => null),
+    leesJson<Record<string, Verrijking>>(inst, 'taken/verrijking.json').catch(() => null),
   ])
 
   if (signalen) opslag.zetSignalen(signalen)
   if (overzicht) opslag.zetOverzicht({ ...opslag.overzicht(), [sleutel]: overzicht })
+  if (verrijking) opslag.zetVerrijking(verrijking)
   opslag.zetVraag(vraag)
+}
+
+/** Vangnet: alle taken uit de repo terughalen (nieuwe telefoon, opslag gewist). */
+export async function herstelTakenVanRepo(): Promise<number> {
+  const inst = opslag.instellingen()
+  if (!inst.token) throw new GitHubFout('Nog niet gekoppeld.')
+
+  const res = await fetch(`${padUrl(inst, 'taken')}?ref=main`, { headers: koppen(inst) })
+  if (res.status === 404) return 0
+  if (!res.ok) throw await fout(res)
+  const bestanden = (await res.json()) as { name: string; path: string; type: string }[]
+
+  const lokaal = opslag.taken()
+  const bekend = new Set(lokaal.map((t) => t.id))
+  const opgehaald: Taak[] = []
+
+  for (const b of bestanden) {
+    if (b.type !== 'file' || !b.name.endsWith('.json')) continue
+    if (b.name === 'verrijking.json') continue
+    if (bekend.has(b.name.replace(/\.json$/, ''))) continue
+    const taak = await leesJson<Taak>(inst, b.path)
+    if (taak?.id) opgehaald.push(taak)
+  }
+
+  if (opgehaald.length) {
+    opslag.zetTaken([...lokaal, ...opgehaald].sort((a, b) => (a.gemaakt < b.gemaakt ? 1 : -1)))
+  }
+  return opgehaald.length
 }
 
 /** Stelt een vraag die de Mac bij de volgende ochtendrun beantwoordt. */
