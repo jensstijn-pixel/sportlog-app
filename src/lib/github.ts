@@ -192,6 +192,41 @@ export async function syncTaken(): Promise<SyncResultaat> {
   return { verzonden, wachtend: opslag.takenWachtrij().length, fout: restfout }
 }
 
+/** Werkt de wachtrij met herstelcijfers af: één bestand per dag. */
+export async function syncHerstel(): Promise<SyncResultaat> {
+  const inst = opslag.instellingen()
+  const wachtrij = opslag.herstelWachtrij()
+  if (!inst.token) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Nog niet gekoppeld.' }
+  if (!wachtrij.length) return { verzonden: 0, wachtend: 0 }
+  if (!navigator.onLine) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Offline.' }
+
+  const alles = opslag.herstel()
+  let verzonden = 0
+  let restfout: string | undefined
+
+  for (const datum of [...wachtrij]) {
+    const rij = alles[datum]
+    if (!rij) {
+      opslag.zetHerstelWachtrij(opslag.herstelWachtrij().filter((d) => d !== datum))
+      continue
+    }
+    try {
+      await schrijfBestand(
+        inst,
+        `herstel/${datum}.json`,
+        JSON.stringify(rij, null, 2) + '\n',
+        `Herstel ${datum}`,
+      )
+      opslag.zetHerstelWachtrij(opslag.herstelWachtrij().filter((d) => d !== datum))
+      verzonden++
+    } catch (e) {
+      restfout = e instanceof Error ? e.message : 'Onbekende fout.'
+      break
+    }
+  }
+  return { verzonden, wachtend: opslag.herstelWachtrij().length, fout: restfout }
+}
+
 /** Haalt op wat de Mac heeft teruggeschreven: signalen, weekoverzicht, open
  *  vraag en de prioritering van de taken. */
 export async function haalTerug(): Promise<void> {

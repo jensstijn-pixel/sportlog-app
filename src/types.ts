@@ -70,6 +70,30 @@ export interface OpenVraag {
   context?: string
 }
 
+/** De cijfers die je 's ochtends uit de Oura-app overneemt.
+ *
+ *  Tijdelijk handwerk: zodra de API-koppeling werkt levert die exact dezelfde
+ *  velden aan, en verandert er verder niets aan de brief of de duiding.
+ *  Alles behalve de datum mag ontbreken — een half ingevulde dag is nuttiger
+ *  dan een lege. */
+export interface Herstel {
+  /** YYYY-MM-DD, de dag waarop je wakker werd */
+  datum: string
+  /** Slaap → Total sleep, in minuten */
+  slaapMinuten: number | null
+  /** Slaap-score (0–100) */
+  slaapScore: number | null
+  /** Readiness-score (0–100) */
+  readiness: number | null
+  /** Average HRV in ms */
+  hrv: number | null
+  /** Lowest resting heart rate */
+  rusthartslag: number | null
+  /** Body temperature, afwijking in °C (mag negatief) */
+  tempAfwijking: number | null
+  bijgewerkt: string
+}
+
 export type Categorie = 'prive' | 'project' | 'huis' | 'admin' | 'overig'
 
 export const CATEGORIE_LABELS: Record<Categorie, string> = {

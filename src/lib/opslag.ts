@@ -1,4 +1,4 @@
-import type { Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Herstel, Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -13,6 +13,8 @@ const K = {
   taken: 'sportlog.taken',
   takenWachtrij: 'sportlog.takenWachtrij',
   verrijking: 'sportlog.verrijking',
+  herstel: 'sportlog.herstel',
+  herstelWachtrij: 'sportlog.herstelWachtrij',
 }
 
 export interface Instellingen {
@@ -73,6 +75,22 @@ export const opslag = {
   /** Categorie en prioriteit per taak-id, ingevuld door de Mac. */
   verrijking: () => lees<Record<string, Verrijking>>(K.verrijking, {}),
   zetVerrijking: (v: Record<string, Verrijking>) => schrijf(K.verrijking, v),
+
+  /** Handmatig overgenomen Oura-cijfers, per datum. */
+  herstel: () => lees<Record<string, Herstel>>(K.herstel, {}),
+  zetHerstel: (h: Record<string, Herstel>) => schrijf(K.herstel, h),
+
+  herstelWachtrij: () => lees<string[]>(K.herstelWachtrij, []),
+  zetHerstelWachtrij: (datums: string[]) => schrijf(K.herstelWachtrij, datums),
+}
+
+/** Herstelcijfers van een dag opslaan; retourneert de nieuwe verzameling. */
+export function bewaarHerstel(h: Herstel): Record<string, Herstel> {
+  const alles = { ...opslag.herstel(), [h.datum]: h }
+  opslag.zetHerstel(alles)
+  const wachtrij = opslag.herstelWachtrij()
+  if (!wachtrij.includes(h.datum)) opslag.zetHerstelWachtrij([...wachtrij, h.datum])
+  return alles
 }
 
 /** Taak toevoegen of bijwerken; retourneert de nieuwe lijst (nieuwste eerst). */

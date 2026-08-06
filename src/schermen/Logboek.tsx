@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { TYPE_LABELS, type Notitie } from '../types'
+import { TYPE_LABELS, type Herstel, type Notitie } from '../types'
 import {
   WEEKDAGEN,
   korteDatum,
@@ -24,6 +24,8 @@ export default function Logboek({
   onInstellingen,
   openTaken,
   onTaken,
+  herstelVandaag,
+  onHerstel,
 }: {
   notities: Notitie[]
   status: SyncStatus
@@ -33,6 +35,8 @@ export default function Logboek({
   onInstellingen: () => void
   openTaken: number
   onTaken: () => void
+  herstelVandaag?: Herstel
+  onHerstel: () => void
 }) {
   const vandaag = vandaagISO()
   const [zichtbaar, setZichtbaar] = useState(() => {
@@ -92,6 +96,37 @@ export default function Logboek({
         className={`mt-2 font-mono text-[10px] uppercase tracking-[0.1em] ${statusKleur}`}
       >
         {status.tekst}
+      </button>
+
+      <button
+        type="button"
+        onClick={onHerstel}
+        className={`kaart mt-3 flex w-full items-center justify-between rounded-[16px] px-4 py-3 text-left ${
+          herstelVandaag ? '' : 'border border-accent/30'
+        }`}
+      >
+        <div className="min-w-0">
+          <div className="text-[11px] uppercase tracking-[0.08em] text-tekst/40">Vannacht</div>
+          {herstelVandaag ? (
+            <div className="mt-1 text-[14px] text-tekst/80">
+              {[
+                herstelVandaag.slaapMinuten != null &&
+                  `${Math.floor(herstelVandaag.slaapMinuten / 60)}u${String(
+                    herstelVandaag.slaapMinuten % 60,
+                  ).padStart(2, '0')}`,
+                herstelVandaag.hrv != null && `HRV ${herstelVandaag.hrv}`,
+                herstelVandaag.readiness != null && `readiness ${herstelVandaag.readiness}`,
+              ]
+                .filter(Boolean)
+                .join(' · ') || 'ingevuld'}
+            </div>
+          ) : (
+            <div className="mt-1 text-[14px] font-semibold text-accent">
+              Nog niet ingevuld — tik om over te nemen
+            </div>
+          )}
+        </div>
+        <span className="shrink-0 pl-3 text-[16px] text-tekst/30">›</span>
       </button>
 
       <div className="mt-4 grid grid-cols-7 text-center font-mono text-[10px] tracking-[0.1em] text-tekst/40">

@@ -1,14 +1,23 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Notitie, Taak } from './types'
-import { bewaarNotitie, bewaarTaak, nieuwId, opslag, verwijderNotitie, verwijderTaak } from './lib/opslag'
-import { haalTerug, stelVraag, syncTaken, syncWachtrij } from './lib/github'
-import { nuISO } from './lib/datum'
+import type { Herstel as HerstelType, Notitie, Taak } from './types'
+import {
+  bewaarHerstel,
+  bewaarNotitie,
+  bewaarTaak,
+  nieuwId,
+  opslag,
+  verwijderNotitie,
+  verwijderTaak,
+} from './lib/opslag'
+import { haalTerug, stelVraag, syncHerstel, syncTaken, syncWachtrij } from './lib/github'
+import { nuISO, vandaagISO } from './lib/datum'
 import Logboek, { type SyncStatus } from './schermen/Logboek'
 import Editor from './schermen/Editor'
 import Detail from './schermen/Detail'
 import Inzicht from './schermen/Inzicht'
 import Instellingen from './schermen/Instellingen'
 import Taken from './schermen/Taken'
+import Herstel from './schermen/Herstel'
 
 type Scherm =
   | { naam: 'logboek' }
@@ -17,28 +26,34 @@ type Scherm =
   | { naam: 'inzicht' }
   | { naam: 'instellingen' }
   | { naam: 'taken' }
+  | { naam: 'herstel' }
+
+/** Alles wat nog naar GitHub moet, over de drie wachtrijen heen. */
+function aantalWachtend(): number {
+  return (
+    opslag.wachtrij().length + opslag.takenWachtrij().length + opslag.herstelWachtrij().length
+  )
+}
 
 export default function App() {
   const [scherm, setScherm] = useState<Scherm>({ naam: 'logboek' })
   const [notities, setNotities] = useState<Notitie[]>(() => opslag.notities())
   const [taken, setTaken] = useState<Taak[]>(() => opslag.taken())
-  const [wachtend, setWachtend] = useState(
-    () => opslag.wachtrij().length + opslag.takenWachtrij().length,
-  )
+  const [herstel, setHerstel] = useState<Record<string, HerstelType>>(() => opslag.herstel())
+  const [wachtend, setWachtend] = useState(() => aantalWachtend())
   const [syncBezig, setSyncBezig] = useState(false)
   const [syncFout, setSyncFout] = useState<string | undefined>()
   const [afgeleid, setAfgeleid] = useState(0) // triggert herlezen van signalen/overzichten
 
   const synchroniseer = useCallback(async () => {
     if (!opslag.instellingen().token) {
-      setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+      setWachtend(aantalWachtend())
       return
     }
     setSyncBezig(true)
-    const notitieResultaat = await syncWachtrij()
-    const taakResultaat = await syncTaken()
-    setWachtend(notitieResultaat.wachtend + taakResultaat.wachtend)
-    setSyncFout(notitieResultaat.fout ?? taakResultaat.fout)
+    const uitkomsten = [await syncWachtrij(), await syncTaken(), await syncHerstel()]
+    setWachtend(aantalWachtend())
+    setSyncFout(uitkomsten.find((r) => r.fout)?.fout)
     try {
       await haalTerug()
       setAfgeleid((n) => n + 1)
@@ -62,34 +77,41 @@ export default function App() {
 
   function opslaan(notitie: Notitie) {
     setNotities(bewaarNotitie(notitie))
-    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+    setWachtend(aantalWachtend())
     setScherm({ naam: 'logboek' })
     void synchroniseer()
   }
 
   function verwijder(id: string) {
     setNotities(verwijderNotitie(id))
-    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+    setWachtend(aantalWachtend())
     setScherm({ naam: 'logboek' })
   }
 
   function taakToevoegen(tekst: string) {
     const nu = nuISO()
     setTaken(bewaarTaak({ id: nieuwId(), tekst, gemaakt: nu, klaar: false, bijgewerkt: nu }))
-    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+    setWachtend(aantalWachtend())
     void synchroniseer()
   }
 
   function taakAfvinken(taak: Taak, klaar: boolean) {
     const nu = nuISO()
     setTaken(bewaarTaak({ ...taak, klaar, klaarOp: klaar ? nu : undefined, bijgewerkt: nu }))
-    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+    setWachtend(aantalWachtend())
     void synchroniseer()
   }
 
   function taakVerwijderen(id: string) {
     setTaken(verwijderTaak(id))
-    setWachtend(opslag.wachtrij().length + opslag.takenWachtrij().length)
+    setWachtend(aantalWachtend())
+  }
+
+  function herstelOpslaan(h: HerstelType) {
+    setHerstel(bewaarHerstel(h))
+    setWachtend(aantalWachtend())
+    setScherm({ naam: 'logboek' })
+    void synchroniseer()
   }
 
   const status: SyncStatus = !opslag.instellingen().token
@@ -156,6 +178,15 @@ export default function App() {
         />
       )
 
+    case 'herstel':
+      return (
+        <Herstel
+          bestaand={herstel[vandaagISO()]}
+          onOpslaan={herstelOpslaan}
+          onTerug={() => setScherm({ naam: 'logboek' })}
+        />
+      )
+
     case 'taken':
       return (
         <Taken
@@ -181,6 +212,8 @@ export default function App() {
           onInzicht={() => setScherm({ naam: 'inzicht' })}
           onInstellingen={() => setScherm({ naam: 'instellingen' })}
           onTaken={() => setScherm({ naam: 'taken' })}
+          herstelVandaag={herstel[vandaagISO()]}
+          onHerstel={() => setScherm({ naam: 'herstel' })}
         />
       )
   }
