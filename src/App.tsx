@@ -18,6 +18,7 @@ import Inzicht from './schermen/Inzicht'
 import Instellingen from './schermen/Instellingen'
 import Taken from './schermen/Taken'
 import Herstel from './schermen/Herstel'
+import Tracking from './schermen/Tracking'
 
 type Scherm =
   | { naam: 'logboek' }
@@ -27,6 +28,7 @@ type Scherm =
   | { naam: 'instellingen' }
   | { naam: 'taken' }
   | { naam: 'herstel' }
+  | { naam: 'tracking' }
 
 /** Alles wat nog naar GitHub moet, over de drie wachtrijen heen. */
 function aantalWachtend(): number {
@@ -187,6 +189,16 @@ export default function App() {
         />
       )
 
+    case 'tracking':
+      return (
+        <Tracking
+          key={afgeleid}
+          dataset={opslag.dataset()}
+          onTerug={() => setScherm({ naam: 'logboek' })}
+          onTaken={() => setScherm({ naam: 'taken' })}
+        />
+      )
+
     case 'taken':
       return (
         <Taken
@@ -198,6 +210,7 @@ export default function App() {
           onVerwijder={taakVerwijderen}
           onTerug={() => setScherm({ naam: 'logboek' })}
           onInzicht={() => setScherm({ naam: 'inzicht' })}
+          onTracking={() => setScherm({ naam: 'tracking' })}
         />
       )
 
@@ -212,6 +225,7 @@ export default function App() {
           onInzicht={() => setScherm({ naam: 'inzicht' })}
           onInstellingen={() => setScherm({ naam: 'instellingen' })}
           onTaken={() => setScherm({ naam: 'taken' })}
+          onTracking={() => setScherm({ naam: 'tracking' })}
           herstelVandaag={herstel[vandaagISO()]}
           onHerstel={() => setScherm({ naam: 'herstel' })}
         />

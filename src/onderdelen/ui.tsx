@@ -116,7 +116,7 @@ export function Eyebrow({ children, accent = false }: { children: ReactNode; acc
   return <div className={`eyebrow ${accent ? 'text-accent' : 'text-tekst/50'}`}>{children}</div>
 }
 
-export type TabNaam = 'logboek' | 'taken' | 'inzicht'
+export type TabNaam = 'logboek' | 'taken' | 'tracking' | 'inzicht'
 
 /** Vaste balk onderaan. De app is meer dan een sportlogboek geworden, dus je
  *  moet tussen de onderdelen kunnen springen zonder eerst terug te navigeren. */
@@ -132,6 +132,7 @@ export function TabBalk({
   const tabs: { naam: TabNaam; label: string; teken: string }[] = [
     { naam: 'logboek', label: 'Logboek', teken: '▤' },
     { naam: 'taken', label: 'To-do', teken: '✓' },
+    { naam: 'tracking', label: 'Tracking', teken: '◠' },
     { naam: 'inzicht', label: 'Inzicht', teken: '✦' },
   ]
   return (
@@ -151,7 +152,7 @@ export function TabBalk({
               <span className="text-[17px] leading-none">{t.teken}</span>
               <span className="text-[10px] font-semibold tracking-[0.04em]">{t.label}</span>
               {t.naam === 'taken' && aantalTaken > 0 && (
-                <span className="absolute right-[22%] top-1.5 min-w-[16px] rounded-full bg-accent px-1 text-[9px] font-extrabold leading-[16px] text-bg">
+                <span className="absolute right-[18%] top-1.5 min-w-[16px] rounded-full bg-accent px-1 text-[9px] font-extrabold leading-[16px] text-bg">
                   {aantalTaken}
                 </span>
               )}

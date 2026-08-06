@@ -132,3 +132,61 @@ export interface Verrijking {
   gepland?: string
   verwerkt_op?: string
 }
+
+/** Alles wat het Tracking-scherm tekent. De Mac rekent het uit
+ *  (scripts/tracking.py); de telefoon tekent alleen. */
+export interface HerstelPunt {
+  datum: string
+  hrv: number | null
+  slaap_min: number | null
+  slaapscore: number | null
+  rusthartslag: number | null
+  readiness: number | null
+  temp: number | null
+}
+
+export interface OefeningPunt {
+  datum: string
+  e1rm: number | null
+  volume: number
+  top_gewicht: number
+  top_reps: number
+  sets: number
+  vlag: string | null
+}
+
+export interface SessiePunt {
+  datum: string
+  volume: number
+  oefeningen: number
+  titel: string | null
+  duur_min: number | null
+  energie: number | null
+}
+
+export interface Samenhang {
+  n: number
+  min_nodig: number
+  betrouwbaar: boolean
+  conclusie: string | null
+  vergelijking: {
+    op: string
+    n_per_groep: number
+    laag_grens: number
+    hoog_grens: number
+    volume_laag: number
+    volume_hoog: number
+    verschil_pct: number
+  } | null
+  correlaties: Record<string, number | null> | null
+}
+
+export interface Dataset {
+  bijgewerkt: string
+  vanaf: string
+  herstel_bron?: string | null
+  herstel: HerstelPunt[]
+  oefeningen: Record<string, OefeningPunt[]>
+  sessies: SessiePunt[]
+  samenhang: Samenhang
+}

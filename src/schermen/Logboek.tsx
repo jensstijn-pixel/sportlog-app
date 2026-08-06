@@ -26,6 +26,7 @@ export default function Logboek({
   onTaken,
   herstelVandaag,
   onHerstel,
+  onTracking,
 }: {
   notities: Notitie[]
   status: SyncStatus
@@ -37,6 +38,7 @@ export default function Logboek({
   onTaken: () => void
   herstelVandaag?: Herstel
   onHerstel: () => void
+  onTracking: () => void
 }) {
   const vandaag = vandaagISO()
   const [zichtbaar, setZichtbaar] = useState(() => {
@@ -208,6 +210,7 @@ export default function Logboek({
         aantalTaken={openTaken}
         onKies={(tab) => {
           if (tab === 'taken') onTaken()
+          if (tab === 'tracking') onTracking()
           if (tab === 'inzicht') onInzicht()
         }}
       />

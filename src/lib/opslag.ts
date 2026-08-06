@@ -1,4 +1,4 @@
-import type { Herstel, Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dataset, Herstel, Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -15,6 +15,7 @@ const K = {
   verrijking: 'sportlog.verrijking',
   herstel: 'sportlog.herstel',
   herstelWachtrij: 'sportlog.herstelWachtrij',
+  dataset: 'sportlog.dataset',
 }
 
 export interface Instellingen {
@@ -82,6 +83,10 @@ export const opslag = {
 
   herstelWachtrij: () => lees<string[]>(K.herstelWachtrij, []),
   zetHerstelWachtrij: (datums: string[]) => schrijf(K.herstelWachtrij, datums),
+
+  /** Doorgerekende reeksen voor het Tracking-scherm (door de Mac gemaakt). */
+  dataset: () => lees<Dataset | null>(K.dataset, null),
+  zetDataset: (d: Dataset) => schrijf(K.dataset, d),
 }
 
 /** Herstelcijfers van een dag opslaan; retourneert de nieuwe verzameling. */

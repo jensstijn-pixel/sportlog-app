@@ -23,6 +23,7 @@ export default function Taken({
   onVerwijder,
   onTerug,
   onInzicht,
+  onTracking,
 }: {
   taken: Taak[]
   verrijking: Record<string, Verrijking>
@@ -31,6 +32,7 @@ export default function Taken({
   onVerwijder: (id: string) => void
   onTerug: () => void
   onInzicht: () => void
+  onTracking: () => void
 }) {
   const [tekst, setTekst] = useState('')
   const invoer = useRef<HTMLTextAreaElement>(null)
@@ -216,6 +218,7 @@ export default function Taken({
         aantalTaken={open.length}
         onKies={(tab) => {
           if (tab === 'logboek') onTerug()
+          if (tab === 'tracking') onTracking()
           if (tab === 'inzicht') onInzicht()
         }}
       />
