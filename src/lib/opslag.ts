@@ -1,4 +1,4 @@
-import type { Dataset, Herstel, Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dataset, Herstel, Notitie, OpenVraag, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -15,6 +15,8 @@ const K = {
   verrijking: 'sportlog.verrijking',
   herstel: 'sportlog.herstel',
   herstelWachtrij: 'sportlog.herstelWachtrij',
+  schermtijd: 'sportlog.schermtijd',
+  schermtijdWachtrij: 'sportlog.schermtijdWachtrij',
   dataset: 'sportlog.dataset',
 }
 
@@ -84,6 +86,13 @@ export const opslag = {
   herstelWachtrij: () => lees<string[]>(K.herstelWachtrij, []),
   zetHerstelWachtrij: (datums: string[]) => schrijf(K.herstelWachtrij, datums),
 
+  /** Handmatig overgenomen schermtijd, per datum. */
+  schermtijd: () => lees<Record<string, Schermtijd>>(K.schermtijd, {}),
+  zetSchermtijd: (s: Record<string, Schermtijd>) => schrijf(K.schermtijd, s),
+
+  schermtijdWachtrij: () => lees<string[]>(K.schermtijdWachtrij, []),
+  zetSchermtijdWachtrij: (datums: string[]) => schrijf(K.schermtijdWachtrij, datums),
+
   /** Doorgerekende reeksen voor het Tracking-scherm (door de Mac gemaakt). */
   dataset: () => lees<Dataset | null>(K.dataset, null),
   zetDataset: (d: Dataset) => schrijf(K.dataset, d),
@@ -95,6 +104,15 @@ export function bewaarHerstel(h: Herstel): Record<string, Herstel> {
   opslag.zetHerstel(alles)
   const wachtrij = opslag.herstelWachtrij()
   if (!wachtrij.includes(h.datum)) opslag.zetHerstelWachtrij([...wachtrij, h.datum])
+  return alles
+}
+
+/** Schermtijd van een dag opslaan; retourneert de nieuwe verzameling. */
+export function bewaarSchermtijd(s: Schermtijd): Record<string, Schermtijd> {
+  const alles = { ...opslag.schermtijd(), [s.datum]: s }
+  opslag.zetSchermtijd(alles)
+  const wachtrij = opslag.schermtijdWachtrij()
+  if (!wachtrij.includes(s.datum)) opslag.zetSchermtijdWachtrij([...wachtrij, s.datum])
   return alles
 }
 

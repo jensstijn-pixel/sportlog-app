@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { TYPE_LABELS, type Herstel, type Notitie } from '../types'
+import { TYPE_LABELS, nettoSchermtijd, type Herstel, type Notitie, type Schermtijd } from '../types'
 import {
   WEEKDAGEN,
   korteDatum,
@@ -26,6 +26,8 @@ export default function Logboek({
   onTaken,
   herstelVandaag,
   onHerstel,
+  schermtijdGisteren,
+  onSchermtijd,
   onTracking,
 }: {
   notities: Notitie[]
@@ -38,6 +40,8 @@ export default function Logboek({
   onTaken: () => void
   herstelVandaag?: Herstel
   onHerstel: () => void
+  schermtijdGisteren?: Schermtijd
+  onSchermtijd: () => void
   onTracking: () => void
 }) {
   const vandaag = vandaagISO()
@@ -121,6 +125,33 @@ export default function Logboek({
               ]
                 .filter(Boolean)
                 .join(' · ') || 'ingevuld'}
+            </div>
+          ) : (
+            <div className="mt-1 text-[14px] font-semibold text-accent">
+              Nog niet ingevuld — tik om over te nemen
+            </div>
+          )}
+        </div>
+        <span className="shrink-0 pl-3 text-[16px] text-tekst/30">›</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={onSchermtijd}
+        className={`kaart mt-2 flex w-full items-center justify-between rounded-[16px] px-4 py-3 text-left ${
+          schermtijdGisteren ? '' : 'border border-accent/30'
+        }`}
+      >
+        <div className="min-w-0">
+          <div className="text-[11px] uppercase tracking-[0.08em] text-tekst/40">Schermtijd gisteren</div>
+          {schermtijdGisteren ? (
+            <div className="mt-1 text-[14px] text-tekst/80">
+              {(() => {
+                const n = nettoSchermtijd(schermtijdGisteren)
+                if (n == null) return 'ingevuld'
+                const u = Math.floor(n / 60)
+                return u ? `${u}u${String(n % 60).padStart(2, '0')} netto` : `${n} min netto`
+              })()}
             </div>
           ) : (
             <div className="mt-1 text-[14px] font-semibold text-accent">

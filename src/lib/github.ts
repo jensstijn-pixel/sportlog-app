@@ -227,6 +227,42 @@ export async function syncHerstel(): Promise<SyncResultaat> {
   return { verzonden, wachtend: opslag.herstelWachtrij().length, fout: restfout }
 }
 
+/** Werkt de wachtrij met schermtijd af: één bestand per dag. Zelfde opzet als
+ *  syncHerstel — de Mac leest schermtijd/<datum>.json. */
+export async function syncSchermtijd(): Promise<SyncResultaat> {
+  const inst = opslag.instellingen()
+  const wachtrij = opslag.schermtijdWachtrij()
+  if (!inst.token) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Nog niet gekoppeld.' }
+  if (!wachtrij.length) return { verzonden: 0, wachtend: 0 }
+  if (!navigator.onLine) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Offline.' }
+
+  const alles = opslag.schermtijd()
+  let verzonden = 0
+  let restfout: string | undefined
+
+  for (const datum of [...wachtrij]) {
+    const rij = alles[datum]
+    if (!rij) {
+      opslag.zetSchermtijdWachtrij(opslag.schermtijdWachtrij().filter((d) => d !== datum))
+      continue
+    }
+    try {
+      await schrijfBestand(
+        inst,
+        `schermtijd/${datum}.json`,
+        JSON.stringify(rij, null, 2) + '\n',
+        `Schermtijd ${datum}`,
+      )
+      opslag.zetSchermtijdWachtrij(opslag.schermtijdWachtrij().filter((d) => d !== datum))
+      verzonden++
+    } catch (e) {
+      restfout = e instanceof Error ? e.message : 'Onbekende fout.'
+      break
+    }
+  }
+  return { verzonden, wachtend: opslag.schermtijdWachtrij().length, fout: restfout }
+}
+
 /** Haalt op wat de Mac heeft teruggeschreven: signalen, weekoverzicht, open
  *  vraag en de prioritering van de taken. */
 export async function haalTerug(): Promise<void> {

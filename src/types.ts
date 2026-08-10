@@ -94,6 +94,46 @@ export interface Herstel {
   bijgewerkt: string
 }
 
+/** Apps waarvan de tijd níét als schermtijd telt.
+ *
+ *  Twee redenen, allebei bewust: CarPlay-apps (Flitsmeister, Kaarten) draaien
+ *  terwijl je rijdt en niet naar je telefoon kijkt, en audio (Spotify) is geen
+ *  scherm — waar je ook bent. Apple telt beide gewoon mee, en Jens rijdt veel,
+ *  dus zonder deze aftrek is het gemiddelde betekenisloos.
+ *
+ *  Komt er een app bij, dan volstaat een regel hier: het formulier en de
+ *  berekening lopen allebei over deze lijst. De Mac heeft dezelfde lijst in
+ *  data/config.json > schermtijd.aftrek_apps — houd ze gelijk. */
+export const SCHERMTIJD_APPS = ['Flitsmeister', 'Spotify', 'Kaarten'] as const
+
+/** De schermtijd die je 's ochtends overneemt uit Instellingen → Schermtijd.
+ *
+ *  Gaat over **gisteren**, niet vandaag: 's ochtends is de dag van vandaag nog
+ *  vrijwel leeg, en Apple toont gisteren als afgeronde dag.
+ *
+ *  Bruto en de aftrekposten worden apart bewaard; netto rekent de Mac uit. Zo
+ *  blijft achteraf zichtbaar waar het verschil vandaan kwam, en kun je de
+ *  definitie later wijzigen zonder je historie kwijt te raken. */
+export interface Schermtijd {
+  /** YYYY-MM-DD, de dag waarover de cijfers gaan */
+  datum: string
+  /** Totale schermtijd volgens Apple, in minuten */
+  totaalMinuten: number | null
+  /** Per app uit SCHERMTIJD_APPS de tijd in minuten die niet meetelt */
+  aftrek: Record<string, number | null>
+  bijgewerkt: string
+}
+
+/** Netto schermtijd, of null als het totaal ontbreekt.
+ *
+ *  Nooit negatief: als de aftrek het totaal overstijgt (typefout, of een app
+ *  die op twee apparaten meetelt) is 0 een eerlijker antwoord dan -14. */
+export function nettoSchermtijd(s: Schermtijd | undefined): number | null {
+  if (!s || s.totaalMinuten == null) return null
+  const af = Object.values(s.aftrek ?? {}).reduce<number>((t, m) => t + (m ?? 0), 0)
+  return Math.max(0, s.totaalMinuten - af)
+}
+
 export type Categorie = 'prive' | 'project' | 'huis' | 'admin' | 'overig'
 
 export const CATEGORIE_LABELS: Record<Categorie, string> = {

@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Herstel as HerstelType, Notitie, Taak } from './types'
+import type { Herstel as HerstelType, Notitie, Schermtijd as SchermtijdType, Taak } from './types'
 import {
   bewaarHerstel,
   bewaarNotitie,
+  bewaarSchermtijd,
   bewaarTaak,
   nieuwId,
   opslag,
   verwijderNotitie,
   verwijderTaak,
 } from './lib/opslag'
-import { haalTerug, stelVraag, syncHerstel, syncTaken, syncWachtrij } from './lib/github'
-import { nuISO, vandaagISO } from './lib/datum'
+import { haalTerug, stelVraag, syncHerstel, syncSchermtijd, syncTaken, syncWachtrij } from './lib/github'
+import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
 import Logboek, { type SyncStatus } from './schermen/Logboek'
 import Editor from './schermen/Editor'
 import Detail from './schermen/Detail'
@@ -18,6 +19,7 @@ import Inzicht from './schermen/Inzicht'
 import Instellingen from './schermen/Instellingen'
 import Taken from './schermen/Taken'
 import Herstel from './schermen/Herstel'
+import Schermtijd from './schermen/Schermtijd'
 import Tracking from './schermen/Tracking'
 
 type Scherm =
@@ -28,12 +30,16 @@ type Scherm =
   | { naam: 'instellingen' }
   | { naam: 'taken' }
   | { naam: 'herstel' }
+  | { naam: 'schermtijd' }
   | { naam: 'tracking' }
 
-/** Alles wat nog naar GitHub moet, over de drie wachtrijen heen. */
+/** Alles wat nog naar GitHub moet, over alle wachtrijen heen. */
 function aantalWachtend(): number {
   return (
-    opslag.wachtrij().length + opslag.takenWachtrij().length + opslag.herstelWachtrij().length
+    opslag.wachtrij().length +
+    opslag.takenWachtrij().length +
+    opslag.herstelWachtrij().length +
+    opslag.schermtijdWachtrij().length
   )
 }
 
@@ -42,6 +48,9 @@ export default function App() {
   const [notities, setNotities] = useState<Notitie[]>(() => opslag.notities())
   const [taken, setTaken] = useState<Taak[]>(() => opslag.taken())
   const [herstel, setHerstel] = useState<Record<string, HerstelType>>(() => opslag.herstel())
+  const [schermtijd, setSchermtijd] = useState<Record<string, SchermtijdType>>(() =>
+    opslag.schermtijd(),
+  )
   const [wachtend, setWachtend] = useState(() => aantalWachtend())
   const [syncBezig, setSyncBezig] = useState(false)
   const [syncFout, setSyncFout] = useState<string | undefined>()
@@ -53,7 +62,12 @@ export default function App() {
       return
     }
     setSyncBezig(true)
-    const uitkomsten = [await syncWachtrij(), await syncTaken(), await syncHerstel()]
+    const uitkomsten = [
+      await syncWachtrij(),
+      await syncTaken(),
+      await syncHerstel(),
+      await syncSchermtijd(),
+    ]
     setWachtend(aantalWachtend())
     setSyncFout(uitkomsten.find((r) => r.fout)?.fout)
     try {
@@ -111,6 +125,13 @@ export default function App() {
 
   function herstelOpslaan(h: HerstelType) {
     setHerstel(bewaarHerstel(h))
+    setWachtend(aantalWachtend())
+    setScherm({ naam: 'logboek' })
+    void synchroniseer()
+  }
+
+  function schermtijdOpslaan(s: SchermtijdType) {
+    setSchermtijd(bewaarSchermtijd(s))
     setWachtend(aantalWachtend())
     setScherm({ naam: 'logboek' })
     void synchroniseer()
@@ -189,6 +210,15 @@ export default function App() {
         />
       )
 
+    case 'schermtijd':
+      return (
+        <Schermtijd
+          bestaand={schermtijd[gisterenISO()]}
+          onOpslaan={schermtijdOpslaan}
+          onTerug={() => setScherm({ naam: 'logboek' })}
+        />
+      )
+
     case 'tracking':
       return (
         <Tracking
@@ -228,6 +258,8 @@ export default function App() {
           onTracking={() => setScherm({ naam: 'tracking' })}
           herstelVandaag={herstel[vandaagISO()]}
           onHerstel={() => setScherm({ naam: 'herstel' })}
+          schermtijdGisteren={schermtijd[gisterenISO()]}
+          onSchermtijd={() => setScherm({ naam: 'schermtijd' })}
         />
       )
   }

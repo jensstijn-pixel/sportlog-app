@@ -22,6 +22,11 @@ export function vandaagISO(): string {
   return isoDatum(new Date())
 }
 
+export function gisterenISO(): string {
+  const d = new Date()
+  return isoDatum(new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1))
+}
+
 /** Parset YYYY-MM-DD als lokale datum (new Date('2026-08-03') is UTC). */
 export function parseISO(iso: string): Date {
   const [j, m, d] = iso.split('-').map(Number)
