@@ -96,15 +96,19 @@ export interface Herstel {
 
 /** Apps waarvan de tijd níét als schermtijd telt.
  *
- *  Twee redenen, allebei bewust: CarPlay-apps (Flitsmeister, Kaarten) draaien
- *  terwijl je rijdt en niet naar je telefoon kijkt, en audio (Spotify) is geen
- *  scherm — waar je ook bent. Apple telt beide gewoon mee, en Jens rijdt veel,
- *  dus zonder deze aftrek is het gemiddelde betekenisloos.
+ *  **Alleen Flitsmeister, en dat is met opzet.** Screen Time telt elke app apart,
+ *  ook als ze tegelijk draaien. In de auto staat Flitsmeister non-stop aan terwijl
+ *  Spotify speelt en Kaarten open is — dezelfde minuten worden dan drie keer
+ *  geteld. Bij elkaar optellen levert daardoor méér aftrek op dan er totale
+ *  schermtijd is (gemeten 10 aug 2026: 2u54 + 1u40 + 1u11 op een kleiner totaal).
  *
- *  Komt er een app bij, dan volstaat een regel hier: het formulier en de
- *  berekening lopen allebei over deze lijst. De Mac heeft dezelfde lijst in
- *  data/config.json > schermtijd.aftrek_apps — houd ze gelijk. */
-export const SCHERMTIJD_APPS = ['Flitsmeister', 'Spotify', 'Kaarten'] as const
+ *  Flitsmeister staat de hele rit aan en is dus de omhullende: zijn tijd ís de
+ *  autotijd. Spotify en Kaarten vallen daarbinnen en hoeven er niet bij.
+ *
+ *  Komt er ooit een app bij, dan telt de berekening hieronder de **hoogste**, niet
+ *  de som — zo kan overlappende tijd nooit dubbel meetellen. De Mac heeft dezelfde
+ *  lijst in data/config.json > schermtijd.aftrek_apps; houd ze gelijk. */
+export const SCHERMTIJD_APPS = ['Flitsmeister'] as const
 
 /** De schermtijd die je 's ochtends overneemt uit Instellingen → Schermtijd.
  *
@@ -126,11 +130,14 @@ export interface Schermtijd {
 
 /** Netto schermtijd, of null als het totaal ontbreekt.
  *
- *  Nooit negatief: als de aftrek het totaal overstijgt (typefout, of een app
- *  die op twee apparaten meetelt) is 0 een eerlijker antwoord dan -14. */
+ *  De **hoogste** aftrekpost telt, niet de som: apps die tegelijk draaien delen
+ *  dezelfde minuten, en optellen zou die dubbel aftrekken.
+ *
+ *  Nooit negatief: als de aftrek het totaal alsnog overstijgt (typefout) is 0
+ *  een eerlijker antwoord dan -14. */
 export function nettoSchermtijd(s: Schermtijd | undefined): number | null {
   if (!s || s.totaalMinuten == null) return null
-  const af = Object.values(s.aftrek ?? {}).reduce<number>((t, m) => t + (m ?? 0), 0)
+  const af = Math.max(0, ...Object.values(s.aftrek ?? {}).map((m) => m ?? 0))
   return Math.max(0, s.totaalMinuten - af)
 }
 

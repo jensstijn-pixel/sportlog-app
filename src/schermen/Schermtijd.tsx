@@ -121,7 +121,8 @@ export default function Schermtijd({
   const aftrek: Record<string, number | null> = {}
   for (const naam of SCHERMTIJD_APPS) aftrek[naam] = samen(apps[naam].u, apps[naam].m)
 
-  const afTotaal = Object.values(aftrek).reduce<number>((t, m) => t + (m ?? 0), 0)
+  // De hoogste, niet de som: auto-apps draaien tegelijk en delen dezelfde minuten.
+  const afTotaal = Math.max(0, ...Object.values(aftrek).map((m) => m ?? 0))
   const netto = totaal == null ? null : Math.max(0, totaal - afTotaal)
   const teVeelAf = totaal != null && afTotaal > totaal
 
@@ -144,8 +145,8 @@ export default function Schermtijd({
       </div>
 
       <p className="mt-3 text-[13px] leading-[1.5] text-tekst/50">
-        Instellingen → Schermtijd → gisteren. Neem het dagtotaal over en daaronder
-        de apps die niet als schermtijd tellen.
+        Instellingen → Schermtijd → gisteren. Neem het dagtotaal over, en daaronder
+        hoe lang Flitsmeister aan stond — dat is je tijd in de auto.
       </p>
 
       <div className="kaart mt-4 rounded-[16px] p-4">
@@ -190,7 +191,7 @@ export default function Schermtijd({
             key={naam}
             id={`app-${naam}`}
             label={naam}
-            hint={naam === 'Spotify' ? 'audio, geen scherm' : 'in de auto'}
+            hint={naam === 'Flitsmeister' ? 'staat de hele rit aan = je autotijd' : 'in de auto'}
             uren={apps[naam].u}
             minuten={apps[naam].m}
             onUren={(v) => setApps((a) => ({ ...a, [naam]: { ...a[naam], u: v } }))}
@@ -216,6 +217,10 @@ export default function Schermtijd({
             De aftrek is groter dan je totaal — even nakijken.
           </p>
         )}
+        <p className="mt-3 text-[11px] leading-[1.45] text-tekst/30">
+          Spotify en Kaarten hoef je niet in te vullen: die draaien tegelijk met
+          Flitsmeister, dus hun tijd zit er al in.
+        </p>
       </div>
 
       <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+22px)] z-10 flex justify-center px-5">
