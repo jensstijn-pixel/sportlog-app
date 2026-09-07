@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { controleer, herstelVanRepo } from '../lib/github'
+import { controleer, herstelPostenVanRepo, herstelTakenVanRepo, herstelVanRepo } from '../lib/github'
 import { opslag } from '../lib/opslag'
 import { Eyebrow, Titel } from '../onderdelen/ui'
 
@@ -36,13 +36,29 @@ export default function Instellingen({
     onGewijzigd()
   }
 
+  /** Alles terughalen wat in de repo staat maar nog niet op dit toestel.
+   *
+   *  Haalde eerder alleen notities op. Dat was een gat: taken en geldposten
+   *  kunnen ook buiten de app om in de repo komen (de Mac schrijft ze), en dan
+   *  bleef de app leeg zonder dat iets dat verklaarde. */
   async function herstel() {
     setBezig(true)
     setMelding(null)
     try {
-      const aantal = await herstelVanRepo()
+      const [notities, taken, posten] = await Promise.all([
+        herstelVanRepo(),
+        herstelTakenVanRepo(),
+        herstelPostenVanRepo(),
+      ])
+      const delen = [
+        notities ? `${notities} notitie${notities === 1 ? '' : 's'}` : null,
+        taken ? `${taken} ta${taken === 1 ? 'ak' : 'ken'}` : null,
+        posten ? `${posten} geldpost${posten === 1 ? '' : 'en'}` : null,
+      ].filter(Boolean)
       setMelding({
-        tekst: aantal ? `${aantal} notitie(s) teruggehaald.` : 'Niets nieuws gevonden — je bent bij.',
+        tekst: delen.length
+          ? `${delen.join(', ')} teruggehaald.`
+          : 'Niets nieuws gevonden — je bent bij.',
         goed: true,
       })
       onGewijzigd()
@@ -117,7 +133,7 @@ export default function Instellingen({
         disabled={bezig || !token}
         className="mt-2.5 w-full rounded-full border border-white/14 py-3.5 text-[14px] font-semibold text-tekst/70 disabled:opacity-40"
       >
-        Notities terughalen uit de repo
+        Alles terughalen uit de repo
       </button>
 
       <div className="kaart mt-6 rounded-[16px] p-4 text-[13px] leading-[1.6] text-tekst/60">

@@ -134,7 +134,6 @@ export function TabBalk({
     { naam: 'taken', label: 'To-do', teken: '✓' },
     { naam: 'financien', label: 'Geld', teken: '€' },
     { naam: 'tracking', label: 'Tracking', teken: '◠' },
-    { naam: 'inzicht', label: 'Inzicht', teken: '✦' },
   ]
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-white/8 bg-bg/92 pb-[env(safe-area-inset-bottom)] backdrop-blur">

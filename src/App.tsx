@@ -220,6 +220,7 @@ export default function App() {
           onGewijzigd={() => {
             setNotities(opslag.notities())
             setTaken(opslag.taken())
+            setPosten(opslag.posten())
             void synchroniseer()
           }}
         />
