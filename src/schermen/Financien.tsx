@@ -109,7 +109,7 @@ export default function Financien({
   return (
     <div className="mx-auto max-w-md px-4 pb-28 pt-6">
       <Eyebrow>Geld</Eyebrow>
-      <Titel>Wat ging eruit</Titel>
+      <Titel>Erin en eruit</Titel>
 
       <div className="kaart mt-4 rounded-[20px] p-4">
         <div className="flex gap-2" role="group" aria-label="Erbij of eraf">
@@ -215,7 +215,7 @@ export default function Financien({
             </p>
           </div>
         </div>
-        {maandenBeschikbaar < 2 && posten.length > 0 && (
+        {maandenBeschikbaar < 2 && posten.length > 0 && !duiding?.vaste_lasten.length && (
           <p className="mt-2 px-1 text-[11px] leading-snug text-tekst/30">
             Nog één maand aan posten. Vergelijken met vorige maanden en vaste lasten herkennen
             kan pas als er meer in staat.
