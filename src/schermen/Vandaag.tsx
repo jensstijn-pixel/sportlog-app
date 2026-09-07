@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { Dagbrief, Herstel, Post, Schermtijd, Taak, Verrijking } from '../types'
 import { nettoSchermtijd } from '../types'
 import { vandaagISO } from '../lib/datum'
-import { Kaart, PaginaKop, Sectiekop, TabBalk, Vinkje } from '../onderdelen/ui'
+import { Kaart, PaginaKop, TabBalk, Vinkje, Vouw } from '../onderdelen/ui'
 import { euro } from '../lib/geld'
 
 /** Het ochtendscherm: alles wat je wilt weten voordat de dag begint.
@@ -44,15 +44,27 @@ const KOP_IN_APP: Record<string, string> = {
 
 /** Eén blok uit de brief. De tekst is platte tekst met regeleinden, dus die
  *  laten we staan zoals hij is; alleen de kop krijgt eigen opmaak. */
-function BriefBlok({ titel, tekst }: { titel: string; tekst: string }) {
+function BriefBlok({ id, titel, tekst }: { id: string; titel: string; tekst: string }) {
   return (
-    <div>
-      <Sectiekop className="mt-6">{titel}</Sectiekop>
-      <Kaart className="mt-2.5 px-4 py-[15px]">
+    <Vouw
+      titel={titel}
+      sleutel={id}
+      // De training wil je 's ochtends meteen zien; de rest is naslag.
+      standaardOpen={id === 'training'}
+      rechts={eersteRegel(tekst)}
+    >
+      <Kaart className="px-4 py-[15px]">
         <p className="text-[14px] leading-[1.55] whitespace-pre-wrap text-body">{tekst}</p>
       </Kaart>
-    </div>
+    </Vouw>
   )
+}
+
+/** Korte samenvatting voor naast een dichte sectiekop: de eerste regel,
+ *  afgekapt. Zo zie je dicht al waar het over gaat. */
+function eersteRegel(tekst: string, max = 26): string {
+  const regel = tekst.split('\n').find((r) => r.trim()) ?? ''
+  return regel.length > max ? regel.slice(0, max - 1).trimEnd() + '…' : regel
 }
 
 export default function Vandaag({
@@ -106,7 +118,7 @@ export default function Vandaag({
   const netto = urenTekst(nettoSchermtijd(schermtijd))
 
   return (
-    <div className="px-5 pt-[26px] pb-28">
+    <div className="px-5 pt-[calc(env(safe-area-inset-top)+26px)] pb-28">
       <PaginaKop
         titel="Vandaag"
         onder={langeDatum(vandaag)}
@@ -164,9 +176,14 @@ export default function Vandaag({
 
       {/* Te doen komt uit de app, niet uit de brief: afvinken moet meteen
           werken. */}
-      <Sectiekop className="mt-6">Te doen</Sectiekop>
+      <Vouw
+        titel="Te doen"
+        sleutel="taken"
+        standaardOpen
+        rechts={vanVandaag.length ? `${vanVandaag.length} vandaag` : 'niets gepland'}
+      >
       {vanVandaag.length ? (
-        <div className="mt-2.5 grid gap-2.5">
+        <div className="grid grid-cols-1 gap-2.5">
           {vanVandaag.map((t) => (
             <Kaart key={t.id} className="flex items-start gap-3 px-4 py-3.5">
               <Vinkje aan={false} onClick={() => onAfvinken(t, true)} label={`Vink af: ${t.tekst}`} />
@@ -182,7 +199,7 @@ export default function Vandaag({
           ))}
         </div>
       ) : (
-        <Kaart className="mt-2.5 px-4 py-3.5">
+        <Kaart className="px-4 py-3.5">
           <p className="text-[14px] text-vaag">
             {openTotaal
               ? `Niets voor vandaag gepland. ${openTotaal} open ${
@@ -192,10 +209,15 @@ export default function Vandaag({
           </p>
         </Kaart>
       )}
+      </Vouw>
 
       {/* Geld: alleen de stand, invoeren gebeurt in het logboek. */}
-      <Sectiekop className="mt-6">Geld deze maand</Sectiekop>
-      <button type="button" onClick={() => onTab('logboek')} className="mt-2.5 block w-full text-left">
+      <Vouw
+        titel="Geld deze maand"
+        sleutel="geld"
+        rechts={`${geld.saldo < 0 ? '−' : '+'} € ${euro(Math.abs(geld.saldo))}`}
+      >
+      <button type="button" onClick={() => onTab('logboek')} className="block w-full text-left">
         <Kaart className="grid grid-cols-3 px-4 py-[15px] text-center">
           <div>
             <div className="text-[12px] text-mut">Eruit</div>
@@ -219,10 +241,11 @@ export default function Vandaag({
           </div>
         </Kaart>
       </button>
+      </Vouw>
 
       {/* De rest van de brief: training, agenda, duiding. */}
       {secties.map((s) => (
-        <BriefBlok key={s.id} titel={KOP_IN_APP[s.id] ?? s.titel} tekst={s.tekst} />
+        <BriefBlok key={s.id} id={s.id} titel={KOP_IN_APP[s.id] ?? s.titel} tekst={s.tekst} />
       ))}
 
       {!briefVanVandaag && (

@@ -147,7 +147,7 @@ export default function Logboek({
   const gekozenLabel = gekozen === vandaag ? `Vandaag · ${korteDatum(gekozen)}` : korteDatum(gekozen)
 
   return (
-    <div className="pt-[26px] pb-28">
+    <div className="pt-[calc(env(safe-area-inset-top)+26px)] pb-28">
       <div className="px-5">
         <PaginaKop
           titel="Logboek"
@@ -305,7 +305,7 @@ export default function Logboek({
         </div>
 
         {dagPosten.length > 0 && (
-          <div className="mt-2.5 grid gap-1.5">
+          <div className="mt-2.5 grid grid-cols-1 gap-1.5">
             {dagPosten.map((p) => (
               <div key={p.id} className="flex items-center gap-2.5 rounded-[14px] bg-kaart px-3.5 py-3">
                 <span className="min-w-0 flex-1 truncate text-[14px] text-body">{p.tekst}</span>
@@ -380,7 +380,7 @@ export default function Logboek({
         </Kaart>
 
         {openTaken.length > 0 && (
-          <div className="mt-2.5 grid gap-2.5">
+          <div className="mt-2.5 grid grid-cols-1 gap-2.5">
             {openTaken.map((t) => {
               const v = verrijking[t.id]
               return (

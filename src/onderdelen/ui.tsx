@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 
 /** Bouwstenen uit de designhandoff van 7 sep 2026 ("App Redesign v2").
  *  Maten en kleuren zijn daar definitief; wijk er niet van af zonder reden. */
@@ -186,6 +186,73 @@ export function Leeg({ children }: { children: ReactNode }) {
     <div className="rounded-[18px] border border-dashed border-[#3A3D3A] px-4 py-[18px] text-center text-[14px] text-vaag">
       {children}
     </div>
+  )
+}
+
+/** Sectie die je open en dicht kunt klappen.
+ *
+ *  Op Vandaag staan zes onderdelen onder elkaar; dicht passen ze op één scherm
+ *  en zie je in één blik wat er is. De stand onthouden we per sectie in
+ *  localStorage, want een sectie die je gisteren opende wil je vandaag ook
+ *  open zien — anders klap je elke ochtend hetzelfde weer uit. */
+export function Vouw({
+  titel,
+  sleutel,
+  rechts,
+  standaardOpen = false,
+  children,
+}: {
+  titel: string
+  /** Vaste naam voor het onthouden van open/dicht. */
+  sleutel: string
+  /** Korte samenvatting die je dicht ook ziet. */
+  rechts?: ReactNode
+  standaardOpen?: boolean
+  children: ReactNode
+}) {
+  const opslagSleutel = `sportlog.vouw.${sleutel}`
+  const [open, setOpen] = useState(() => {
+    try {
+      const bewaard = localStorage.getItem(opslagSleutel)
+      return bewaard === null ? standaardOpen : bewaard === '1'
+    } catch {
+      return standaardOpen
+    }
+  })
+
+  function wissel() {
+    const nieuw = !open
+    setOpen(nieuw)
+    try {
+      localStorage.setItem(opslagSleutel, nieuw ? '1' : '0')
+    } catch {
+      // Volle of geblokkeerde opslag: de sectie werkt gewoon, hij onthoudt
+      // alleen niets.
+    }
+  }
+
+  return (
+    <section className="mt-6">
+      <button
+        type="button"
+        onClick={wissel}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 py-1 text-left"
+      >
+        <span className="sectiekop">{titel}</span>
+        <span className="flex items-center gap-2">
+          {rechts && <span className="text-[13px] text-vaag">{rechts}</span>}
+          <span
+            className="text-[12px] text-vaag transition-transform duration-150"
+            style={{ transform: open ? 'rotate(90deg)' : 'none' }}
+            aria-hidden="true"
+          >
+            ▶
+          </span>
+        </span>
+      </button>
+      {open && <div className="mt-2.5">{children}</div>}
+    </section>
   )
 }
 

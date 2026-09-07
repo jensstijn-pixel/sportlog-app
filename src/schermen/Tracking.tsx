@@ -72,7 +72,7 @@ export default function Tracking({
   const dagenMetData = dataset?.herstel?.length ?? 0
 
   return (
-    <div className="px-5 pt-[26px] pb-28">
+    <div className="px-5 pt-[calc(env(safe-area-inset-top)+26px)] pb-28">
       <PaginaKop
         titel="Tracking"
         onder={
@@ -95,7 +95,7 @@ export default function Tracking({
       </div>
 
       <Sectiekop className="mt-6">Herstel</Sectiekop>
-      <div className="mt-2.5 grid gap-2.5">
+      <div className="mt-2.5 grid grid-cols-1 gap-2.5">
         <Grafiek titel="HRV" punten={reeks('hrv')} eenheid="ms" trend />
         <Grafiek
           titel="Slaap"
@@ -109,7 +109,7 @@ export default function Tracking({
       <p className="mt-2 text-[12px] text-vaag">dikke lijn = 7-daags gemiddelde</p>
 
       <Sectiekop className="mt-6">Geld</Sectiekop>
-      <div className="mt-2.5 grid gap-2.5">
+      <div className="mt-2.5 grid grid-cols-1 gap-2.5">
         {geldPunten.length >= 2 ? (
           <Grafiek
             titel="Uitgaven per dag"
