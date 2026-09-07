@@ -10,32 +10,41 @@ import {
   opslag,
   verwijderNotitie,
   verwijderPost,
-  verwijderTaak,
 } from './lib/opslag'
 import { haalTerug, stelVraag, syncHerstel, syncPosten, syncSchermtijd, syncTaken, syncWachtrij } from './lib/github'
 import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
-import Logboek, { type SyncStatus } from './schermen/Logboek'
+import Logboek from './schermen/Logboek'
 import Editor from './schermen/Editor'
 import Detail from './schermen/Detail'
 import Inzicht from './schermen/Inzicht'
 import Instellingen from './schermen/Instellingen'
-import Taken from './schermen/Taken'
 import Herstel from './schermen/Herstel'
 import Schermtijd from './schermen/Schermtijd'
 import Tracking from './schermen/Tracking'
-import Financien from './schermen/Financien'
+import Vandaag from './schermen/Vandaag'
 
 type Scherm =
   | { naam: 'logboek' }
-  | { naam: 'editor'; id?: string }
+  | { naam: 'editor'; id?: string; datum?: string }
   | { naam: 'detail'; id: string }
   | { naam: 'inzicht' }
   | { naam: 'instellingen' }
-  | { naam: 'taken' }
   | { naam: 'herstel' }
   | { naam: 'schermtijd' }
   | { naam: 'tracking' }
-  | { naam: 'financien' }
+  | { naam: 'vandaag' }
+
+/** Het weekoverzicht van deze week, als de Mac het al geschreven heeft. */
+function huidigWeekoverzicht() {
+  const nu = new Date()
+  const do_ = new Date(nu)
+  do_.setDate(nu.getDate() - ((nu.getDay() + 6) % 7) + 3) // donderdag bepaalt het weeknummer
+  const start = new Date(do_.getFullYear(), 0, 4)
+  const week = 1 + Math.round(((do_.getTime() - start.getTime()) / 86400000 -
+    3 + ((start.getDay() + 6) % 7)) / 7)
+  const sleutel = `${do_.getFullYear()}-${String(week).padStart(2, '0')}`
+  return opslag.overzicht()[sleutel]
+}
 
 /** Alles wat nog naar GitHub moet, over alle wachtrijen heen. */
 function aantalWachtend(): number {
@@ -49,7 +58,7 @@ function aantalWachtend(): number {
 }
 
 export default function App() {
-  const [scherm, setScherm] = useState<Scherm>({ naam: 'logboek' })
+  const [scherm, setScherm] = useState<Scherm>({ naam: 'vandaag' })
   const [notities, setNotities] = useState<Notitie[]>(() => opslag.notities())
   const [taken, setTaken] = useState<Taak[]>(() => opslag.taken())
   const [herstel, setHerstel] = useState<Record<string, HerstelType>>(() => opslag.herstel())
@@ -125,11 +134,6 @@ export default function App() {
     void synchroniseer()
   }
 
-  function taakVerwijderen(id: string) {
-    setTaken(verwijderTaak(id))
-    setWachtend(aantalWachtend())
-  }
-
   function postToevoegen(invoer: {
     datum: string
     bedragCent: number
@@ -161,15 +165,16 @@ export default function App() {
     void synchroniseer()
   }
 
-  const status: SyncStatus = !opslag.instellingen().token
-    ? { tekst: '○ niet gekoppeld — tik hier', soort: 'aandacht' }
+  // Eén woord over de koppeling, voor in de subtitel van het logboek.
+  const status = !opslag.instellingen().token
+    ? 'niet gekoppeld'
     : syncBezig
-      ? { tekst: '· synchroniseren…', soort: 'bezig' }
+      ? 'synchroniseren…'
       : wachtend > 0
-        ? { tekst: `● ${wachtend} wacht${wachtend === 1 ? '' : 'en'} op verbinding`, soort: 'aandacht' }
+        ? `${wachtend} wacht${wachtend === 1 ? '' : 'en'}`
         : syncFout
-          ? { tekst: `● ${syncFout}`, soort: 'aandacht' }
-          : { tekst: '✓ gesynct', soort: 'goed' }
+          ? 'sync mislukt'
+          : 'gesynct'
 
   const signalen = opslag.signalen()
   const huidige = 'id' in scherm && scherm.id ? notities.find((n) => n.id === scherm.id) : undefined
@@ -182,6 +187,7 @@ export default function App() {
       return (
         <Editor
           bestaand={huidige}
+          voorDatum={'datum' in scherm ? scherm.datum : undefined}
           vraag={opslag.vraag()}
           onOpslaan={opslaan}
           onAnnuleer={() => setScherm(huidige ? { naam: 'detail', id: huidige.id } : { naam: 'logboek' })}
@@ -249,60 +255,49 @@ export default function App() {
         <Tracking
           key={afgeleid}
           dataset={opslag.dataset()}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-          onTaken={() => setScherm({ naam: 'taken' })}
-          onFinancien={() => setScherm({ naam: 'financien' })}
-        />
-      )
-
-    case 'financien':
-      return (
-        <Financien
-          key={afgeleid}
           posten={posten}
-          duiding={opslag.financienDuiding()}
-          onToevoegen={postToevoegen}
-          onVerwijder={postVerwijderen}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-          onTaken={() => setScherm({ naam: 'taken' })}
-          onTracking={() => setScherm({ naam: 'tracking' })}
-          onInzicht={() => setScherm({ naam: 'inzicht' })}
+          weekoverzicht={huidigWeekoverzicht()}
+          onTab={(t) => setScherm({ naam: t })}
         />
       )
 
-    case 'taken':
+    case 'vandaag':
       return (
-        <Taken
+        <Vandaag
           key={afgeleid}
+          brief={opslag.brief()}
           taken={taken}
           verrijking={opslag.verrijking()}
-          onToevoegen={taakToevoegen}
+          posten={posten}
+          herstel={herstel[vandaagISO()]}
+          schermtijd={schermtijd[gisterenISO()]}
           onAfvinken={taakAfvinken}
-          onVerwijder={taakVerwijderen}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-          onInzicht={() => setScherm({ naam: 'inzicht' })}
-          onTracking={() => setScherm({ naam: 'tracking' })}
-          onFinancien={() => setScherm({ naam: 'financien' })}
+          onHerstel={() => setScherm({ naam: 'herstel' })}
+          onSchermtijd={() => setScherm({ naam: 'schermtijd' })}
+          onInstellingen={() => setScherm({ naam: 'instellingen' })}
+          onTab={(t) => setScherm({ naam: t })}
         />
       )
 
     default:
       return (
         <Logboek
+          key={afgeleid}
           notities={notities}
           status={status}
-          openTaken={taken.filter((t) => !t.klaar).length}
-          onNieuw={() => setScherm({ naam: 'editor' })}
-          onOpen={(n) => setScherm({ naam: 'detail', id: n.id })}
+          posten={posten}
+          taken={taken}
+          verrijking={opslag.verrijking()}
+          herstel={herstel}
+          schermtijd={schermtijd}
+          onNieuweNotitie={(datum) => setScherm({ naam: 'editor', datum })}
+          onOpenNotitie={(n) => setScherm({ naam: 'detail', id: n.id })}
+          onPostToevoegen={postToevoegen}
+          onPostVerwijder={postVerwijderen}
+          onTaakToevoegen={taakToevoegen}
+          onTaakAfvinken={taakAfvinken}
           onInzicht={() => setScherm({ naam: 'inzicht' })}
-          onInstellingen={() => setScherm({ naam: 'instellingen' })}
-          onTaken={() => setScherm({ naam: 'taken' })}
-          onTracking={() => setScherm({ naam: 'tracking' })}
-          onFinancien={() => setScherm({ naam: 'financien' })}
-          herstelVandaag={herstel[vandaagISO()]}
-          onHerstel={() => setScherm({ naam: 'herstel' })}
-          schermtijdGisteren={schermtijd[gisterenISO()]}
-          onSchermtijd={() => setScherm({ naam: 'schermtijd' })}
+          onTab={(t) => setScherm({ naam: t })}
         />
       )
   }

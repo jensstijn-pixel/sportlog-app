@@ -1,4 +1,4 @@
-import type { Dataset, FinancienDuiding, Notitie, OpenVraag, Post, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dagbrief, Dataset, FinancienDuiding, Notitie, OpenVraag, Post, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 import { nuISO, weekJaar, weeknummer } from './datum'
 import { opslag, type Instellingen } from './opslag'
 
@@ -309,13 +309,14 @@ export async function haalTerug(): Promise<void> {
   const nu = new Date()
   const sleutel = `${weekJaar(nu)}-${String(weeknummer(nu)).padStart(2, '0')}`
 
-  const [signalen, overzicht, vraag, verrijking, dataset, duiding] = await Promise.all([
+  const [signalen, overzicht, vraag, verrijking, dataset, duiding, brief] = await Promise.all([
     leesJson<Record<string, Signaal>>(inst, 'signalen/laatste.json').catch(() => null),
     leesJson<Weekoverzicht>(inst, `overzicht/week-${sleutel}.json`).catch(() => null),
     leesJson<OpenVraag>(inst, 'vraag/open.json').catch(() => null),
     leesJson<Record<string, Verrijking>>(inst, 'taken/verrijking.json').catch(() => null),
     leesJson<Dataset>(inst, 'tracking/dataset.json').catch(() => null),
     leesJson<FinancienDuiding>(inst, 'financien/duiding.json').catch(() => null),
+    leesJson<Dagbrief>(inst, 'brief/vandaag.json').catch(() => null),
   ])
 
   if (signalen) opslag.zetSignalen(signalen)
@@ -323,6 +324,7 @@ export async function haalTerug(): Promise<void> {
   if (verrijking) opslag.zetVerrijking(verrijking)
   if (dataset) opslag.zetDataset(dataset)
   if (duiding) opslag.zetFinancienDuiding(duiding)
+  if (brief) opslag.zetBrief(brief)
   opslag.zetVraag(vraag)
 }
 

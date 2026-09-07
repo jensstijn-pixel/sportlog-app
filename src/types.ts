@@ -271,3 +271,24 @@ export interface FinancienDuiding {
   /** Omschrijvingen die maandelijks terugkeren, herkend door de Mac. */
   vaste_lasten: { tekst: string; bedragCent: number; maanden: number }[]
 }
+
+/** De ochtendbrief zoals de Mac hem naar de app schrijft (brief/vandaag.json).
+ *
+ *  Eén bron met de tekstbrief in iCloud: `brief.py` bouwt beide uit dezelfde
+ *  modules. Taken en geld zitten er bewust níét in — die haalt de app uit zijn
+ *  eigen opslag, want een taak die je om tien uur afvinkt moet meteen weg zijn
+ *  en de brief is een momentopname van 07:50. */
+export interface BriefSectie {
+  id: string
+  titel: string
+  tekst: string
+}
+
+export interface Dagbrief {
+  /** JJJJ-MM-DD waar de brief over gaat. */
+  datum: string
+  gegenereerd_op: string
+  /** Naam van de trainingsdag uit het schema, of null op een rustdag. */
+  dagnaam: string | null
+  secties: BriefSectie[]
+}

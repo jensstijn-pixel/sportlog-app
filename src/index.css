@@ -1,23 +1,60 @@
 @import 'tailwindcss';
 
+/* Kleuren en maten komen uit de designhandoff van 7 sep 2026
+   ("App Redesign v2"). Grafiet in plaats van hard zwart, lichtblauw accent
+   in plaats van lime, en kaarten zonder rand. */
 @theme {
-  --color-bg: #0b0c0e;
-  --color-kaart: #15171b;
-  --color-tekst: #f3f4f1;
-  --color-notitie: #e9eae5;
-  --color-accent: #c8f542;
+  --color-bg: #1e201f;
+  --color-kaart: #262927;
+  --color-lijn: #323532;
+  --color-rand: #2c2f2d;
 
-  --font-sans: Archivo, system-ui, -apple-system, sans-serif;
+  --color-tekst: #edefea;
+  --color-body: #c6c9c2;
+  --color-mut: #9ca09a;
+  --color-notitie: #8b8f88;
+  --color-vaag: #6c706a;
+  --color-uit: #7c807c;
+
+  --color-accent: #9ccbff;
+  --color-inkt: #0e1620;
+  --color-accent-op: #c3e0ff;
+
+  --color-chip: #283847;
+  --color-chip-tekst: #a9d2ff;
+  --color-lijn-ruw: #3a424b;
+  --color-samenhang: #25303b;
+  --color-samenhang-tekst: #d3dee8;
+  --color-samenhang-sub: #8aa0b5;
+  --color-uit-knop: #31342d;
+  --color-vink-rand: #4a4e4a;
+
+  --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   --font-mono: ui-monospace, Menlo, monospace;
 }
 
-/* Archivo variable, lokaal gebundeld zodat de app ook offline goed oogt. */
+/* Space Grotesk variable, lokaal gebundeld: de app moet offline net zo goed
+   ogen als online, en een CDN-font valt dan terug op system-ui. */
 @font-face {
-  font-family: 'Archivo';
+  font-family: 'Space Grotesk';
   font-style: normal;
-  font-weight: 400 800;
+  font-weight: 300 700;
   font-display: swap;
-  src: url('/sportlog-app/fonts/archivo.woff2') format('woff2');
+  src: url('/sportlog-app/fonts/space-grotesk.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url('/sportlog-app/fonts/space-grotesk-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+    U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020,
+    U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 html,
@@ -61,7 +98,7 @@ body,
 
   textarea::placeholder,
   input::placeholder {
-    color: rgba(243, 244, 241, 0.3);
+    color: var(--color-vaag);
   }
 
   button {
@@ -71,38 +108,54 @@ body,
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-}
 
-@keyframes caret {
-  0%,
-  45% {
-    opacity: 1;
-  }
-  50%,
-  100% {
-    opacity: 0;
+  /* Zichtbare focus voor toetsenbordgebruik; muis en touch krijgen niets. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
   }
 }
 
 @layer components {
-  .eyebrow {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-  }
-
+  /* Kaarten hebben in dit design géén rand, alleen een eigen vlak. */
   .kaart {
     background: var(--color-kaart);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 18px;
   }
 
-  .ai-kaart {
-    background: linear-gradient(135deg, #15171b, #1a1e15);
-    border: 1px solid rgba(200, 245, 66, 0.2);
+  /* Hairline binnen een kaart, tussen twee rijen. */
+  .kaartlijn {
+    height: 1px;
+    background: var(--color-lijn);
+    margin-inline: 16px;
   }
 
-  /* Verbergt de scrollbar maar houdt scrollen intact (kalender, chiprij). */
+  .paginatitel {
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    color: var(--color-tekst);
+  }
+
+  .subtitel {
+    font-size: 14px;
+    color: var(--color-mut);
+    margin-top: 7px;
+  }
+
+  .sectiekop {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-mut);
+  }
+
+  .pil {
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  /* Verbergt de scrollbar maar houdt scrollen intact (weekstrip, chiprij). */
   .geen-balk {
     scrollbar-width: none;
   }

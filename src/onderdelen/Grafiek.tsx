@@ -193,12 +193,6 @@ export default function Grafiek({
             <span>{gevuld.at(-1)!.datum.slice(5).replace('-', '/')}</span>
           </div>
 
-          {vorm.trendXY && !actief && (
-            <p className="mt-0.5 text-[10px] text-tekst/25">
-              dikke lijn = {TREND_VENSTER}-daags gemiddelde
-            </p>
-          )}
-
           {actief && (
             <p className="mt-1 text-[11px] text-tekst/50">
               {actief.datum} · {formatteer(actief.waarde)} {eenheid}

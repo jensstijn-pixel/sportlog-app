@@ -9,12 +9,15 @@ const CHIPS: Chip[] = ['tijdsnood', 'pijn', 'mindere-dag', 'topdag']
 
 export default function Editor({
   bestaand,
+  voorDatum,
   vraag,
   onOpslaan,
   onAnnuleer,
   onVerwijder,
 }: {
   bestaand?: Notitie
+  /** Dag waarvoor je een nieuwe notitie schrijft; default vandaag. */
+  voorDatum?: string
   vraag: OpenVraag | null
   onOpslaan: (n: Notitie) => void
   onAnnuleer: () => void
@@ -27,7 +30,7 @@ export default function Editor({
   const [tekst, setTekst] = useState(bestaand?.tekst ?? '')
   const [chips, setChips] = useState<Chip[]>(bestaand?.chips ?? [])
 
-  const datum = bestaand?.datum ?? vandaagISO()
+  const datum = bestaand?.datum ?? voorDatum ?? vandaagISO()
   const kanOpslaan = tekst.trim().length > 0 || chips.length > 0
 
   function wisselChip(c: Chip) {
@@ -81,7 +84,7 @@ export default function Editor({
 
       <div className="mt-4 flex gap-2">
         {TYPES.map((t) => (
-          <Pil key={t} actief={type === t} onClick={() => setType(t)}>
+          <Pil key={t} aan={type === t} onClick={() => setType(t)}>
             {TYPE_LABELS[t]}
           </Pil>
         ))}
@@ -111,7 +114,7 @@ export default function Editor({
 
       <div className="geen-balk -mx-5 mt-2.5 flex gap-2 overflow-x-auto px-5">
         {CHIPS.map((c) => (
-          <Pil key={c} klein actief={chips.includes(c)} onClick={() => wisselChip(c)}>
+          <Pil key={c} aan={chips.includes(c)} onClick={() => wisselChip(c)}>
             {CHIP_LABELS[c]}
           </Pil>
         ))}

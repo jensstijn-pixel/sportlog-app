@@ -1,4 +1,4 @@
-import type { Dataset, FinancienDuiding, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dagbrief, Dataset, FinancienDuiding, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -21,6 +21,7 @@ const K = {
   posten: 'sportlog.posten',
   postenWachtrij: 'sportlog.postenWachtrij',
   financienDuiding: 'sportlog.financienDuiding',
+  brief: 'sportlog.brief',
 }
 
 export interface Instellingen {
@@ -110,6 +111,10 @@ export const opslag = {
   /** Vaste lasten die de Mac herkende. */
   financienDuiding: () => lees<FinancienDuiding | null>(K.financienDuiding, null),
   zetFinancienDuiding: (d: FinancienDuiding) => schrijf(K.financienDuiding, d),
+
+  /** De ochtendbrief van vandaag, door de Mac geschreven. */
+  brief: () => lees<Dagbrief | null>(K.brief, null),
+  zetBrief: (b: Dagbrief) => schrijf(K.brief, b),
 }
 
 /** Herstelcijfers van een dag opslaan; retourneert de nieuwe verzameling. */
