@@ -237,3 +237,37 @@ export interface Dataset {
   sessies: SessiePunt[]
   samenhang: Samenhang
 }
+
+/** Een geldpost: een uitgave of een inkomst, met jouw eigen uitleg erbij.
+ *
+ *  Alleen privé geld. Zakelijk loopt via Moneybird en hoort hier niet in
+ *  (besluit Jens, 7 sep 2026), dus er is bewust géén zakelijk-privé-schakelaar.
+ *
+ *  Het bedrag staat in **hele centen** en is altijd positief; `richting` bepaalt
+ *  of het eraf of erbij gaat. Centen omdat optellen met kommagetallen scheve
+ *  totalen geeft (0,1 + 0,2 wordt niet precies 0,3), en een maandtotaal dat
+ *  één cent afwijkt kost meer vertrouwen dan het waard is. */
+export type Richting = 'af' | 'bij'
+
+export interface Post {
+  id: string
+  /** JJJJ-MM-DD: de dag waarop het geld ging, niet per se de dag van invoeren. */
+  datum: string
+  /** ISO 8601 met tijdzone, moment van eerste opslaan. */
+  tijdstip: string
+  /** Positief, in centen. 12,50 euro is 1250. */
+  bedragCent: number
+  richting: Richting
+  /** Wat het was en waarvoor, in Jens' eigen woorden. Dit is de kern: geen
+   *  boekhoudpakket weet dat die 40 euro materiaal voor PT was. */
+  tekst: string
+  bijgewerkt: string
+}
+
+/** Wat de Mac van de posten maakte (financien/duiding.json). Puur terugkoppeling
+ *  naar de app; de app rekent zijn eigen totalen en heeft dit niet nodig. */
+export interface FinancienDuiding {
+  bijgewerkt: string
+  /** Omschrijvingen die maandelijks terugkeren, herkend door de Mac. */
+  vaste_lasten: { tekst: string; bedragCent: number; maanden: number }[]
+}

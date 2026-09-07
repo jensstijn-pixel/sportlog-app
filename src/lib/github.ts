@@ -1,4 +1,4 @@
-import type { Dataset, Notitie, OpenVraag, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dataset, FinancienDuiding, Notitie, OpenVraag, Post, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 import { nuISO, weekJaar, weeknummer } from './datum'
 import { opslag, type Instellingen } from './opslag'
 
@@ -265,6 +265,43 @@ export async function syncSchermtijd(): Promise<SyncResultaat> {
 
 /** Haalt op wat de Mac heeft teruggeschreven: signalen, weekoverzicht, open
  *  vraag en de prioritering van de taken. */
+/** Werkt de wachtrij met geldposten af: één bestand per post, zoals bij taken.
+ *  Zo kunnen telefoon en Mac tegelijk schrijven zonder merge-conflict. */
+export async function syncPosten(): Promise<SyncResultaat> {
+  const inst = opslag.instellingen()
+  const wachtrij = opslag.postenWachtrij()
+  if (!inst.token) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Nog niet gekoppeld.' }
+  if (!wachtrij.length) return { verzonden: 0, wachtend: 0 }
+  if (!navigator.onLine) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Offline.' }
+
+  const posten = opslag.posten()
+  let verzonden = 0
+  let restfout: string | undefined
+
+  for (const id of [...wachtrij]) {
+    const post = posten.find((p) => p.id === id)
+    if (!post) {
+      opslag.zetPostenWachtrij(opslag.postenWachtrij().filter((w) => w !== id))
+      continue
+    }
+    try {
+      const euro = (post.bedragCent / 100).toFixed(2).replace('.', ',')
+      await schrijfBestand(
+        inst,
+        `financien/${id}.json`,
+        JSON.stringify(post, null, 2) + '\n',
+        `${post.richting === 'af' ? '-' : '+'}${euro} ${post.tekst.slice(0, 40)}`,
+      )
+      opslag.zetPostenWachtrij(opslag.postenWachtrij().filter((w) => w !== id))
+      verzonden++
+    } catch (e) {
+      restfout = e instanceof Error ? e.message : 'Onbekende fout.'
+      break
+    }
+  }
+  return { verzonden, wachtend: opslag.postenWachtrij().length, fout: restfout }
+}
+
 export async function haalTerug(): Promise<void> {
   const inst = opslag.instellingen()
   if (!inst.token || !navigator.onLine) return
@@ -272,22 +309,56 @@ export async function haalTerug(): Promise<void> {
   const nu = new Date()
   const sleutel = `${weekJaar(nu)}-${String(weeknummer(nu)).padStart(2, '0')}`
 
-  const [signalen, overzicht, vraag, verrijking, dataset] = await Promise.all([
+  const [signalen, overzicht, vraag, verrijking, dataset, duiding] = await Promise.all([
     leesJson<Record<string, Signaal>>(inst, 'signalen/laatste.json').catch(() => null),
     leesJson<Weekoverzicht>(inst, `overzicht/week-${sleutel}.json`).catch(() => null),
     leesJson<OpenVraag>(inst, 'vraag/open.json').catch(() => null),
     leesJson<Record<string, Verrijking>>(inst, 'taken/verrijking.json').catch(() => null),
     leesJson<Dataset>(inst, 'tracking/dataset.json').catch(() => null),
+    leesJson<FinancienDuiding>(inst, 'financien/duiding.json').catch(() => null),
   ])
 
   if (signalen) opslag.zetSignalen(signalen)
   if (overzicht) opslag.zetOverzicht({ ...opslag.overzicht(), [sleutel]: overzicht })
   if (verrijking) opslag.zetVerrijking(verrijking)
   if (dataset) opslag.zetDataset(dataset)
+  if (duiding) opslag.zetFinancienDuiding(duiding)
   opslag.zetVraag(vraag)
 }
 
 /** Vangnet: alle taken uit de repo terughalen (nieuwe telefoon, opslag gewist). */
+/** Vangnet én eerste vulling: alle geldposten uit de repo halen die de app nog
+ *  niet kent. Nodig omdat posten ook buiten de app om in de repo kunnen komen
+ *  (Jens dicteert een oude uitgave, de Mac schrijft het bestand). */
+export async function herstelPostenVanRepo(): Promise<number> {
+  const inst = opslag.instellingen()
+  if (!inst.token) throw new GitHubFout('Nog niet gekoppeld.')
+
+  const res = await fetch(`${padUrl(inst, 'financien')}?ref=main`, { headers: koppen(inst) })
+  if (res.status === 404) return 0
+  if (!res.ok) throw await fout(res)
+  const bestanden = (await res.json()) as { name: string; path: string; type: string }[]
+
+  const lokaal = opslag.posten()
+  const bekend = new Set(lokaal.map((p) => p.id))
+  const opgehaald: Post[] = []
+
+  for (const b of bestanden) {
+    if (b.type !== 'file' || !b.name.endsWith('.json')) continue
+    if (b.name === 'duiding.json') continue
+    if (bekend.has(b.name.replace(/\.json$/, ''))) continue
+    const post = await leesJson<Post>(inst, b.path)
+    if (post?.id) opgehaald.push(post)
+  }
+
+  if (opgehaald.length) {
+    opslag.zetPosten([...lokaal, ...opgehaald].sort((a, b) => (a.datum !== b.datum
+      ? (a.datum < b.datum ? 1 : -1)
+      : (a.tijdstip < b.tijdstip ? 1 : -1))))
+  }
+  return opgehaald.length
+}
+
 export async function herstelTakenVanRepo(): Promise<number> {
   const inst = opslag.instellingen()
   if (!inst.token) throw new GitHubFout('Nog niet gekoppeld.')

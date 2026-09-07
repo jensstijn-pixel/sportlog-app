@@ -24,6 +24,7 @@ export default function Taken({
   onTerug,
   onInzicht,
   onTracking,
+  onFinancien,
 }: {
   taken: Taak[]
   verrijking: Record<string, Verrijking>
@@ -33,6 +34,7 @@ export default function Taken({
   onTerug: () => void
   onInzicht: () => void
   onTracking: () => void
+  onFinancien: () => void
 }) {
   const [tekst, setTekst] = useState('')
   const invoer = useRef<HTMLTextAreaElement>(null)
@@ -218,6 +220,7 @@ export default function Taken({
         aantalTaken={open.length}
         onKies={(tab) => {
           if (tab === 'logboek') onTerug()
+          if (tab === 'financien') onFinancien()
           if (tab === 'tracking') onTracking()
           if (tab === 'inzicht') onInzicht()
         }}

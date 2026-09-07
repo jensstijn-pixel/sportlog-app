@@ -29,6 +29,7 @@ export default function Logboek({
   schermtijdGisteren,
   onSchermtijd,
   onTracking,
+  onFinancien,
 }: {
   notities: Notitie[]
   status: SyncStatus
@@ -43,6 +44,7 @@ export default function Logboek({
   schermtijdGisteren?: Schermtijd
   onSchermtijd: () => void
   onTracking: () => void
+  onFinancien: () => void
 }) {
   const vandaag = vandaagISO()
   const [zichtbaar, setZichtbaar] = useState(() => {
@@ -241,6 +243,7 @@ export default function Logboek({
         aantalTaken={openTaken}
         onKies={(tab) => {
           if (tab === 'taken') onTaken()
+          if (tab === 'financien') onFinancien()
           if (tab === 'tracking') onTracking()
           if (tab === 'inzicht') onInzicht()
         }}

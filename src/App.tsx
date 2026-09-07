@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Herstel as HerstelType, Notitie, Schermtijd as SchermtijdType, Taak } from './types'
+import type { Herstel as HerstelType, Notitie, Post, Richting, Schermtijd as SchermtijdType, Taak } from './types'
 import {
   bewaarHerstel,
   bewaarNotitie,
+  bewaarPost,
   bewaarSchermtijd,
   bewaarTaak,
   nieuwId,
   opslag,
   verwijderNotitie,
+  verwijderPost,
   verwijderTaak,
 } from './lib/opslag'
-import { haalTerug, stelVraag, syncHerstel, syncSchermtijd, syncTaken, syncWachtrij } from './lib/github'
+import { haalTerug, stelVraag, syncHerstel, syncPosten, syncSchermtijd, syncTaken, syncWachtrij } from './lib/github'
 import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
 import Logboek, { type SyncStatus } from './schermen/Logboek'
 import Editor from './schermen/Editor'
@@ -21,6 +23,7 @@ import Taken from './schermen/Taken'
 import Herstel from './schermen/Herstel'
 import Schermtijd from './schermen/Schermtijd'
 import Tracking from './schermen/Tracking'
+import Financien from './schermen/Financien'
 
 type Scherm =
   | { naam: 'logboek' }
@@ -32,6 +35,7 @@ type Scherm =
   | { naam: 'herstel' }
   | { naam: 'schermtijd' }
   | { naam: 'tracking' }
+  | { naam: 'financien' }
 
 /** Alles wat nog naar GitHub moet, over alle wachtrijen heen. */
 function aantalWachtend(): number {
@@ -39,7 +43,8 @@ function aantalWachtend(): number {
     opslag.wachtrij().length +
     opslag.takenWachtrij().length +
     opslag.herstelWachtrij().length +
-    opslag.schermtijdWachtrij().length
+    opslag.schermtijdWachtrij().length +
+    opslag.postenWachtrij().length
   )
 }
 
@@ -51,6 +56,7 @@ export default function App() {
   const [schermtijd, setSchermtijd] = useState<Record<string, SchermtijdType>>(() =>
     opslag.schermtijd(),
   )
+  const [posten, setPosten] = useState<Post[]>(() => opslag.posten())
   const [wachtend, setWachtend] = useState(() => aantalWachtend())
   const [syncBezig, setSyncBezig] = useState(false)
   const [syncFout, setSyncFout] = useState<string | undefined>()
@@ -67,6 +73,7 @@ export default function App() {
       await syncTaken(),
       await syncHerstel(),
       await syncSchermtijd(),
+      await syncPosten(),
     ]
     setWachtend(aantalWachtend())
     setSyncFout(uitkomsten.find((r) => r.fout)?.fout)
@@ -120,6 +127,23 @@ export default function App() {
 
   function taakVerwijderen(id: string) {
     setTaken(verwijderTaak(id))
+    setWachtend(aantalWachtend())
+  }
+
+  function postToevoegen(invoer: {
+    datum: string
+    bedragCent: number
+    richting: Richting
+    tekst: string
+  }) {
+    const nu = nuISO()
+    setPosten(bewaarPost({ id: nieuwId(), ...invoer, tijdstip: nu, bijgewerkt: nu }))
+    setWachtend(aantalWachtend())
+    void synchroniseer()
+  }
+
+  function postVerwijderen(id: string) {
+    setPosten(verwijderPost(id))
     setWachtend(aantalWachtend())
   }
 
@@ -226,6 +250,22 @@ export default function App() {
           dataset={opslag.dataset()}
           onTerug={() => setScherm({ naam: 'logboek' })}
           onTaken={() => setScherm({ naam: 'taken' })}
+          onFinancien={() => setScherm({ naam: 'financien' })}
+        />
+      )
+
+    case 'financien':
+      return (
+        <Financien
+          key={afgeleid}
+          posten={posten}
+          duiding={opslag.financienDuiding()}
+          onToevoegen={postToevoegen}
+          onVerwijder={postVerwijderen}
+          onTerug={() => setScherm({ naam: 'logboek' })}
+          onTaken={() => setScherm({ naam: 'taken' })}
+          onTracking={() => setScherm({ naam: 'tracking' })}
+          onInzicht={() => setScherm({ naam: 'inzicht' })}
         />
       )
 
@@ -241,6 +281,7 @@ export default function App() {
           onTerug={() => setScherm({ naam: 'logboek' })}
           onInzicht={() => setScherm({ naam: 'inzicht' })}
           onTracking={() => setScherm({ naam: 'tracking' })}
+          onFinancien={() => setScherm({ naam: 'financien' })}
         />
       )
 
@@ -256,6 +297,7 @@ export default function App() {
           onInstellingen={() => setScherm({ naam: 'instellingen' })}
           onTaken={() => setScherm({ naam: 'taken' })}
           onTracking={() => setScherm({ naam: 'tracking' })}
+          onFinancien={() => setScherm({ naam: 'financien' })}
           herstelVandaag={herstel[vandaagISO()]}
           onHerstel={() => setScherm({ naam: 'herstel' })}
           schermtijdGisteren={schermtijd[gisterenISO()]}

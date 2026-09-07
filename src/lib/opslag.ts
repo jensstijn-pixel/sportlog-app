@@ -1,4 +1,4 @@
-import type { Dataset, Herstel, Notitie, OpenVraag, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dataset, FinancienDuiding, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -18,6 +18,9 @@ const K = {
   schermtijd: 'sportlog.schermtijd',
   schermtijdWachtrij: 'sportlog.schermtijdWachtrij',
   dataset: 'sportlog.dataset',
+  posten: 'sportlog.posten',
+  postenWachtrij: 'sportlog.postenWachtrij',
+  financienDuiding: 'sportlog.financienDuiding',
 }
 
 export interface Instellingen {
@@ -96,6 +99,17 @@ export const opslag = {
   /** Doorgerekende reeksen voor het Tracking-scherm (door de Mac gemaakt). */
   dataset: () => lees<Dataset | null>(K.dataset, null),
   zetDataset: (d: Dataset) => schrijf(K.dataset, d),
+
+  /** Geldposten: uitgaven en inkomsten, nieuwste eerst. */
+  posten: () => lees<Post[]>(K.posten, []),
+  zetPosten: (p: Post[]) => schrijf(K.posten, p),
+
+  postenWachtrij: () => lees<string[]>(K.postenWachtrij, []),
+  zetPostenWachtrij: (ids: string[]) => schrijf(K.postenWachtrij, ids),
+
+  /** Vaste lasten die de Mac herkende. */
+  financienDuiding: () => lees<FinancienDuiding | null>(K.financienDuiding, null),
+  zetFinancienDuiding: (d: FinancienDuiding) => schrijf(K.financienDuiding, d),
 }
 
 /** Herstelcijfers van een dag opslaan; retourneert de nieuwe verzameling. */
@@ -157,6 +171,33 @@ export function verwijderNotitie(id: string): Notitie[] {
   const nieuw = opslag.notities().filter((n) => n.id !== id)
   opslag.zetNotities(nieuw)
   opslag.zetWachtrij(opslag.wachtrij().filter((w) => w !== id))
+  return nieuw
+}
+
+/** Geldpost toevoegen of bijwerken; retourneert de nieuwe lijst.
+ *  Sorteert op datum (de dag waarop het geld ging), en binnen een dag op het
+ *  moment van invoeren — anders springt een nagetypte post van gisteren
+ *  bovenaan de lijst. */
+export function bewaarPost(post: Post): Post[] {
+  const bestaand = opslag.posten()
+  const index = bestaand.findIndex((p) => p.id === post.id)
+  const nieuw = index >= 0
+    ? bestaand.map((p) => (p.id === post.id ? post : p))
+    : [post, ...bestaand]
+  nieuw.sort((a, b) => (a.datum !== b.datum
+    ? (a.datum < b.datum ? 1 : -1)
+    : (a.tijdstip < b.tijdstip ? 1 : -1)))
+  opslag.zetPosten(nieuw)
+
+  const wachtrij = opslag.postenWachtrij()
+  if (!wachtrij.includes(post.id)) opslag.zetPostenWachtrij([...wachtrij, post.id])
+  return nieuw
+}
+
+export function verwijderPost(id: string): Post[] {
+  const nieuw = opslag.posten().filter((p) => p.id !== id)
+  opslag.zetPosten(nieuw)
+  opslag.zetPostenWachtrij(opslag.postenWachtrij().filter((w) => w !== id))
   return nieuw
 }
 

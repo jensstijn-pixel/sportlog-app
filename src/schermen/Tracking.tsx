@@ -23,10 +23,12 @@ export default function Tracking({
   dataset,
   onTerug,
   onTaken,
+  onFinancien,
 }: {
   dataset: Dataset | null
   onTerug: () => void
   onTaken: () => void
+  onFinancien: () => void
 }) {
   const [dagen, setDagen] = useState(30)
   const [oefening, setOefening] = useState<string | null>(null)
@@ -72,7 +74,14 @@ export default function Tracking({
           <br />
           De Mac zet ze hier neer bij de eerstvolgende ochtendrun.
         </div>
-        <TabBalk actief="tracking" onKies={(t) => (t === 'taken' ? onTaken() : onTerug())} />
+        <TabBalk
+          actief="tracking"
+          onKies={(t) => {
+            if (t === 'taken') onTaken()
+            else if (t === 'financien') onFinancien()
+            else onTerug()
+          }}
+        />
       </div>
     )
   }
@@ -219,7 +228,14 @@ export default function Tracking({
         {dataset.herstel_bron === 'handmatig' && ' · herstelcijfers handmatig ingevuld'}
       </p>
 
-      <TabBalk actief="tracking" onKies={(t) => (t === 'taken' ? onTaken() : onTerug())} />
+      <TabBalk
+          actief="tracking"
+          onKies={(t) => {
+            if (t === 'taken') onTaken()
+            else if (t === 'financien') onFinancien()
+            else onTerug()
+          }}
+        />
     </div>
   )
 }
