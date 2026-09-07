@@ -10,10 +10,15 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      // Eigen service worker (src/sw.ts) in plaats van een gegenereerde:
+      // die heeft de app nodig om pushmeldingen te kunnen ontvangen.
+      // Precachen en zelf bijwerken doet sw.ts net zo goed.
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'fonts/*.woff2'],
-      workbox: {
-        cleanupOutdatedCaches: true,
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
       },
       manifest: {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { controleer, herstelPostenVanRepo, herstelTakenVanRepo, herstelVanRepo } from '../lib/github'
+import { meldingStand, testMelding, zetMeldingenAan } from '../lib/melding'
 import { opslag } from '../lib/opslag'
 import { Eyebrow, Titel } from '../onderdelen/ui'
 
@@ -41,6 +42,17 @@ export default function Instellingen({
    *  Haalde eerder alleen notities op. Dat was een gat: taken en geldposten
    *  kunnen ook buiten de app om in de repo komen (de Mac schrijft ze), en dan
    *  bleef de app leeg zonder dat iets dat verklaarde. */
+  const [stand, setStand] = useState(meldingStand)
+
+  async function meldingenAan() {
+    setBezig(true)
+    setMelding(null)
+    const uitkomst = await zetMeldingenAan()
+    setMelding({ tekst: uitkomst.tekst, goed: uitkomst.ok })
+    setStand(meldingStand())
+    setBezig(false)
+  }
+
   async function herstel() {
     setBezig(true)
     setMelding(null)
@@ -135,6 +147,51 @@ export default function Instellingen({
       >
         Alles terughalen uit de repo
       </button>
+
+      <div className="kaart mt-6 rounded-[16px] p-4">
+        <div className="mb-2 text-[11px] uppercase tracking-[0.08em] text-mut">Ochtendmelding</div>
+        {stand === 'aan' ? (
+          <>
+            <p className="text-[13px] leading-[1.6] text-body">
+              Staat aan. Je krijgt 's ochtends één melding zodra de Mac je brief heeft
+              gemaakt: wat er nog ingevuld moet worden, of je training van vandaag.
+            </p>
+            <button
+              type="button"
+              onClick={() => void testMelding()}
+              className="mt-3 w-full rounded-full border border-white/14 py-3 text-[14px] font-semibold text-tekst/70"
+            >
+              Testmelding tonen
+            </button>
+          </>
+        ) : stand === 'geweigerd' ? (
+          <p className="text-[13px] leading-[1.6] text-body">
+            Meldingen zijn geweigerd voor deze app. Terugzetten kan alleen via Instellingen →
+            Meldingen → Sportlog op je telefoon.
+          </p>
+        ) : stand === 'kan-niet' ? (
+          <p className="text-[13px] leading-[1.6] text-body">
+            Dit toestel kan geen meldingen tonen. Op de iPhone werkt het alleen als de app via
+            Deel → Zet op beginscherm is geïnstalleerd.
+          </p>
+        ) : (
+          <>
+            <p className="text-[13px] leading-[1.6] text-body">
+              Eén melding per ochtend, rond de tijd dat je brief klaar is: welke cijfers je nog
+              moet invullen, of wat je vandaag traint. Je telefoon vraagt daarna zelf om
+              toestemming — die vraag krijg je maar één keer, dus tik op toestaan.
+            </p>
+            <button
+              type="button"
+              onClick={meldingenAan}
+              disabled={bezig}
+              className="mt-3 w-full rounded-full bg-accent py-3 text-[14px] font-bold text-inkt disabled:opacity-40"
+            >
+              Meldingen aanzetten
+            </button>
+          </>
+        )}
+      </div>
 
       <div className="kaart mt-6 rounded-[16px] p-4 text-[13px] leading-[1.6] text-tekst/60">
         <div className="mb-2 text-[11px] uppercase tracking-[0.08em] text-tekst/45">Token maken</div>
