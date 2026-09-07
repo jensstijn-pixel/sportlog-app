@@ -227,6 +227,8 @@ export default function App() {
             setNotities(opslag.notities())
             setTaken(opslag.taken())
             setPosten(opslag.posten())
+            setHerstel(opslag.herstel())
+            setSchermtijd(opslag.schermtijd())
             void synchroniseer()
           }}
         />

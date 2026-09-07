@@ -361,6 +361,55 @@ export async function herstelPostenVanRepo(): Promise<number> {
   return opgehaald.length
 }
 
+/** Dagcijfers terughalen die per datum in één map staan (herstel, schermtijd).
+ *
+ *  Nodig gebleken op 8 sep 2026: wie de PWA van zijn beginscherm haalt en
+ *  opnieuw toevoegt, krijgt van iOS een schone opslag. De repo had alles nog,
+ *  maar de app kon herstel en schermtijd niet terughalen — die twee ontbraken
+ *  in de herstelfuncties. Nu niet meer. */
+async function herstelDagmapVanRepo<T extends { datum: string }>(
+  map: 'herstel' | 'schermtijd',
+  huidig: Record<string, T>,
+): Promise<Record<string, T> | null> {
+  const inst = opslag.instellingen()
+  if (!inst.token) throw new GitHubFout('Nog niet gekoppeld.')
+
+  const res = await fetch(`${padUrl(inst, map)}?ref=main`, { headers: koppen(inst) })
+  if (res.status === 404) return null
+  if (!res.ok) throw await fout(res)
+  const bestanden = (await res.json()) as { name: string; path: string; type: string }[]
+
+  const nieuw: Record<string, T> = { ...huidig }
+  let erbij = 0
+  for (const b of bestanden) {
+    if (b.type !== 'file' || !b.name.endsWith('.json')) continue
+    const datum = b.name.replace(/\.json$/, '')
+    if (nieuw[datum]) continue
+    const rij = await leesJson<T>(inst, b.path)
+    if (rij?.datum) {
+      nieuw[datum] = rij
+      erbij++
+    }
+  }
+  return erbij ? nieuw : null
+}
+
+export async function herstelHerstelVanRepo(): Promise<number> {
+  const voor = opslag.herstel()
+  const na = await herstelDagmapVanRepo('herstel', voor)
+  if (!na) return 0
+  opslag.zetHerstel(na)
+  return Object.keys(na).length - Object.keys(voor).length
+}
+
+export async function herstelSchermtijdVanRepo(): Promise<number> {
+  const voor = opslag.schermtijd()
+  const na = await herstelDagmapVanRepo('schermtijd', voor)
+  if (!na) return 0
+  opslag.zetSchermtijd(na)
+  return Object.keys(na).length - Object.keys(voor).length
+}
+
 export async function herstelTakenVanRepo(): Promise<number> {
   const inst = opslag.instellingen()
   if (!inst.token) throw new GitHubFout('Nog niet gekoppeld.')

@@ -1,5 +1,12 @@
 import { useState } from 'react'
-import { controleer, herstelPostenVanRepo, herstelTakenVanRepo, herstelVanRepo } from '../lib/github'
+import {
+  controleer,
+  herstelHerstelVanRepo,
+  herstelPostenVanRepo,
+  herstelSchermtijdVanRepo,
+  herstelTakenVanRepo,
+  herstelVanRepo,
+} from '../lib/github'
 import { meldingStand, testMelding, zetMeldingenAan } from '../lib/melding'
 import { opslag } from '../lib/opslag'
 import { Eyebrow, Titel } from '../onderdelen/ui'
@@ -57,15 +64,19 @@ export default function Instellingen({
     setBezig(true)
     setMelding(null)
     try {
-      const [notities, taken, posten] = await Promise.all([
+      const [notities, taken, posten, herstelDagen, schermDagen] = await Promise.all([
         herstelVanRepo(),
         herstelTakenVanRepo(),
         herstelPostenVanRepo(),
+        herstelHerstelVanRepo(),
+        herstelSchermtijdVanRepo(),
       ])
       const delen = [
         notities ? `${notities} notitie${notities === 1 ? '' : 's'}` : null,
         taken ? `${taken} ta${taken === 1 ? 'ak' : 'ken'}` : null,
         posten ? `${posten} geldpost${posten === 1 ? '' : 'en'}` : null,
+        herstelDagen ? `${herstelDagen} dag${herstelDagen === 1 ? '' : 'en'} slaap` : null,
+        schermDagen ? `${schermDagen} dag${schermDagen === 1 ? '' : 'en'} schermtijd` : null,
       ].filter(Boolean)
       setMelding({
         tekst: delen.length
