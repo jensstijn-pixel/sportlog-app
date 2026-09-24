@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Notitie, Post, Richting, Schermtijd, Herstel, Taak, Verrijking } from '../types'
+import type { Notitie, Schermtijd, Herstel, Taak, Verrijking } from '../types'
 import { TYPE_LABELS } from '../types'
 import { korteDatum, parseISO, vandaagISO, weekDagen } from '../lib/datum'
 import {
@@ -9,12 +9,10 @@ import {
   KaartKnop,
   Leeg,
   PaginaKop,
-  Schakelaar,
   Sectiekop,
   TabBalk,
   Vinkje,
 } from '../onderdelen/ui'
-import { euro, naarCent } from '../lib/geld'
 
 /** Alles vastleggen, met de dag als kapstok.
  *
@@ -54,15 +52,12 @@ function bouwWeken(vandaag: string): string[][] {
 export default function Logboek({
   notities,
   status,
-  posten,
   taken,
   verrijking,
   herstel,
   schermtijd,
   onNieuweNotitie,
   onOpenNotitie,
-  onPostToevoegen,
-  onPostVerwijder,
   onTaakToevoegen,
   onTaakAfvinken,
   onInzicht,
@@ -71,15 +66,12 @@ export default function Logboek({
   notities: Notitie[]
   /** Kort woord over de koppeling; komt in de subtitel te staan. */
   status: string
-  posten: Post[]
   taken: Taak[]
   verrijking: Record<string, Verrijking>
   herstel: Record<string, Herstel>
   schermtijd: Record<string, Schermtijd>
   onNieuweNotitie: (datum: string) => void
   onOpenNotitie: (n: Notitie) => void
-  onPostToevoegen: (p: { datum: string; bedragCent: number; richting: Richting; tekst: string }) => void
-  onPostVerwijder: (id: string) => void
   onTaakToevoegen: (tekst: string) => void
   onTaakAfvinken: (taak: Taak, klaar: boolean) => void
   onInzicht: () => void
@@ -102,10 +94,6 @@ export default function Logboek({
   }
 
   const notitie = notities.find((n) => n.datum === gekozen)
-  const dagPosten = useMemo(
-    () => posten.filter((p) => p.datum === gekozen),
-    [posten, gekozen],
-  )
   const openTaken = useMemo(
     () =>
       taken
@@ -120,20 +108,6 @@ export default function Logboek({
         }),
     [taken, verrijking],
   )
-
-  // Geld invoeren
-  const [richting, setRichting] = useState<Richting>('af')
-  const [bedrag, setBedrag] = useState('')
-  const [omschrijving, setOmschrijving] = useState('')
-  const cent = naarCent(bedrag)
-  const kanBewaren = cent !== null && omschrijving.trim().length > 0
-
-  function bewaarPost() {
-    if (cent === null || !omschrijving.trim()) return
-    onPostToevoegen({ datum: gekozen, bedragCent: cent, richting, tekst: omschrijving.trim() })
-    setBedrag('')
-    setOmschrijving('')
-  }
 
   // Taak invoeren
   const [taakTekst, setTaakTekst] = useState('')
@@ -259,75 +233,17 @@ export default function Logboek({
           <AccentKnop onClick={() => onNieuweNotitie(gekozen)}>+ Nieuwe notitie</AccentKnop>
         </div>
 
-        {/* Geld van die dag */}
+        {/* Geld wordt hier niet meer ingevoerd (sinds 25 sep 2026): per uitgave
+            invoeren hield Jens niet vol. Het komt nu uit het wekelijkse ABN-afschrift
+            en staat als weekblok in de brief op Vandaag. */}
         <Sectiekop className="mt-8">Geld</Sectiekop>
-        <div className="kaart mt-2.5 rounded-[20px] p-3.5">
-          <Schakelaar
-            waarde={richting}
-            opties={[
-              { waarde: 'af' as Richting, label: '− eraf' },
-              { waarde: 'bij' as Richting, label: '+ erbij' },
-            ]}
-            onKies={setRichting}
-          />
-          <div className="mt-4 flex items-baseline gap-2 px-1">
-            <span className="text-[28px] font-semibold text-vaag" aria-hidden="true">
-              €
-            </span>
-            <input
-              type="text"
-              inputMode="decimal"
-              autoComplete="off"
-              aria-label="Bedrag in euro"
-              placeholder="0,00"
-              value={bedrag}
-              onChange={(e) => setBedrag(e.target.value)}
-              className="min-w-0 flex-1 text-[32px] font-bold tabular-nums"
-            />
-          </div>
-          <input
-            type="text"
-            aria-label="Wat was het, en waarvoor"
-            placeholder="Wat was het? Bijv. boodschappen Jumbo"
-            value={omschrijving}
-            onChange={(e) => setOmschrijving(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && kanBewaren && bewaarPost()}
-            className="mt-3.5 w-full rounded-[14px] bg-bg px-3.5 py-3 text-[15px]"
-          />
-          <div className="mt-3.5 flex items-center justify-between px-0.5">
-            <span className="text-[13px] text-mut">
-              {gekozen === vandaag ? 'Vandaag' : korteDatum(gekozen)}
-            </span>
-            <KaartKnop onClick={bewaarPost} uit={!kanBewaren}>
-              Bewaren
-            </KaartKnop>
-          </div>
-        </div>
-
-        {dagPosten.length > 0 && (
-          <div className="mt-2.5 grid grid-cols-1 gap-1.5">
-            {dagPosten.map((p) => (
-              <div key={p.id} className="flex items-center gap-2.5 rounded-[14px] bg-kaart px-3.5 py-3">
-                <span className="min-w-0 flex-1 truncate text-[14px] text-body">{p.tekst}</span>
-                <span
-                  className={`shrink-0 text-[14px] font-bold tabular-nums ${
-                    p.richting === 'bij' ? 'text-accent' : 'text-tekst'
-                  }`}
-                >
-                  {p.richting === 'af' ? '−' : '+'} € {euro(p.bedragCent)}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => onPostVerwijder(p.id)}
-                  aria-label={`Verwijder ${p.tekst}`}
-                  className="shrink-0 px-1 text-[15px] text-vaag"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        <Kaart className="mt-2.5 px-4 py-3.5">
+          <p className="text-[14px] leading-[1.55] text-vaag">
+            Geld komt nu uit je bankafschrift. Download elke zondag in de ABN-app je bij- en
+            afschrijvingen (vanaf laatste download) naar iCloud → Geld. Maandag staat je week
+            in de brief.
+          </p>
+        </Kaart>
 
         {/* Cijfers van die dag, alleen als ze er zijn */}
         {(herstel[gekozen] || schermtijd[gekozen]) && (

@@ -1,21 +1,21 @@
 import { useMemo } from 'react'
-import type { Dagbrief, Herstel, Post, Schermtijd, Taak, Verrijking } from '../types'
+import type { Dagbrief, Herstel, Schermtijd, Taak, Verrijking } from '../types'
 import { nettoSchermtijd } from '../types'
 import { vandaagISO } from '../lib/datum'
 import { Kaart, PaginaKop, TabBalk, Vinkje, Vouw } from '../onderdelen/ui'
-import { euro } from '../lib/geld'
 
 /** Het ochtendscherm: alles wat je wilt weten voordat de dag begint.
  *
  *  Twee bronnen, bewust gescheiden. De **brief** komt van de Mac (07:50) en
- *  levert training, agenda en de duiding bij je slaap — dat is denkwerk dat
- *  daar gebeurt. De **app zelf** levert taken, geld en of je cijfers al
+ *  levert training, de duiding bij je slaap en (maandag) je geldweek uit het
+ *  bankafschrift — dat is denkwerk dat daar gebeurt. De **app zelf** levert
+ *  taken en of je cijfers al
  *  ingevuld zijn, want dat verandert door de dag heen: een taak die je om tien
  *  uur afvinkt moet meteen weg zijn, en een brief van vanochtend weet dat niet.
  *
  *  Gevolg van die splitsing: dit scherm is nooit leeg. Geen netwerk, geen Mac
- *  aan, brief van gisteren — je ziet altijd nog je taken, je geldstand en de
- *  kaartjes om je cijfers in te vullen. */
+ *  aan, brief van gisteren — je ziet altijd nog je taken en de kaartjes om je
+ *  cijfers in te vullen. */
 
 const MAANDEN = [
   'januari', 'februari', 'maart', 'april', 'mei', 'juni',
@@ -40,6 +40,7 @@ function urenTekst(minuten: number | null | undefined): string | null {
 const KOP_IN_APP: Record<string, string> = {
   oura: 'Over je nacht',
   schermtijd: 'Over je schermtijd',
+  financien: 'Geld deze week',
 }
 
 /** Eén blok uit de brief. De tekst is platte tekst met regeleinden, dus die
@@ -71,7 +72,6 @@ export default function Vandaag({
   brief,
   taken,
   verrijking,
-  posten,
   herstel,
   schermtijd,
   onAfvinken,
@@ -83,7 +83,6 @@ export default function Vandaag({
   brief: Dagbrief | null
   taken: Taak[]
   verrijking: Record<string, Verrijking>
-  posten: Post[]
   herstel?: Herstel
   schermtijd?: Schermtijd
   onAfvinken: (taak: Taak, klaar: boolean) => void
@@ -99,14 +98,6 @@ export default function Vandaag({
     [taken, verrijking, vandaag],
   )
   const openTotaal = useMemo(() => taken.filter((t) => !t.klaar).length, [taken])
-
-  const geld = useMemo(() => {
-    const maand = vandaag.slice(0, 7)
-    const rij = posten.filter((p) => p.datum.slice(0, 7) === maand)
-    const uit = rij.filter((p) => p.richting === 'af').reduce((s, p) => s + p.bedragCent, 0)
-    const inn = rij.filter((p) => p.richting === 'bij').reduce((s, p) => s + p.bedragCent, 0)
-    return { uit, inn, saldo: inn - uit }
-  }, [posten, vandaag])
 
   // De brief is van vandaag, of hij is het niet. In dat tweede geval tonen we
   // hem niet: liever een eerlijke lege plek dan de training van gisteren.
@@ -211,38 +202,6 @@ export default function Vandaag({
       )}
       </Vouw>
 
-      {/* Geld: alleen de stand, invoeren gebeurt in het logboek. */}
-      <Vouw
-        titel="Geld deze maand"
-        sleutel="geld"
-        rechts={`${geld.saldo < 0 ? '−' : '+'} € ${euro(Math.abs(geld.saldo))}`}
-      >
-      <button type="button" onClick={() => onTab('logboek')} className="block w-full text-left">
-        <Kaart className="grid grid-cols-3 px-4 py-[15px] text-center">
-          <div>
-            <div className="text-[12px] text-mut">Eruit</div>
-            <div className="mt-[3px] text-[16px] font-bold tabular-nums">€ {euro(geld.uit)}</div>
-          </div>
-          <div>
-            <div className="text-[12px] text-mut">Erin</div>
-            <div className="mt-[3px] text-[16px] font-bold tabular-nums text-accent">
-              € {euro(geld.inn)}
-            </div>
-          </div>
-          <div>
-            <div className="text-[12px] text-mut">Verschil</div>
-            <div
-              className={`mt-[3px] text-[16px] font-bold tabular-nums ${
-                geld.saldo < 0 ? 'text-tekst' : 'text-accent'
-              }`}
-            >
-              {geld.saldo < 0 ? '−' : '+'} € {euro(Math.abs(geld.saldo))}
-            </div>
-          </div>
-        </Kaart>
-      </button>
-      </Vouw>
-
       {/* De rest van de brief: training, agenda, duiding. */}
       {secties.map((s) => (
         <BriefBlok key={s.id} id={s.id} titel={KOP_IN_APP[s.id] ?? s.titel} tekst={s.tekst} />
@@ -261,8 +220,8 @@ export default function Vandaag({
 
       <p className="mt-6 text-[12px] text-[#5A5E5A]">
         {briefVanVandaag
-          ? `Brief van ${briefVanVandaag.gegenereerd_op.slice(11, 16)} · taken en geld live uit de app`
-          : 'Taken en geld komen live uit de app'}
+          ? `Brief van ${briefVanVandaag.gegenereerd_op.slice(11, 16)} · taken live uit de app`
+          : 'Taken komen live uit de app'}
       </p>
 
       <TabBalk actief="vandaag" aantalTaken={vanVandaag.length} onKies={(t) => t !== 'vandaag' && onTab(t)} />

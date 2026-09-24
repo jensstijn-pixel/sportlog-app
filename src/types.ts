@@ -236,6 +236,9 @@ export interface Dataset {
   oefeningen: Record<string, OefeningPunt[]>
   sessies: SessiePunt[]
   samenhang: Samenhang
+  /** Sinds 25 sep 2026: uitgaven en inkomen per week (maandag = datum) uit het
+   *  ABN-afschrift, in centen. Alleen volledige weken. */
+  geld_weken?: { datum: string; uit: number; in: number }[]
 }
 
 /** Een geldpost: een uitgave of een inkomst, met jouw eigen uitleg erbij.

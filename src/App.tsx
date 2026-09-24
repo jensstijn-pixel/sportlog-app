@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Herstel as HerstelType, Notitie, Post, Richting, Schermtijd as SchermtijdType, Taak } from './types'
+import type { Herstel as HerstelType, Notitie, Schermtijd as SchermtijdType, Taak } from './types'
 import {
   bewaarHerstel,
   bewaarNotitie,
-  bewaarPost,
   bewaarSchermtijd,
   bewaarTaak,
   nieuwId,
   opslag,
   verwijderNotitie,
-  verwijderPost,
 } from './lib/opslag'
 import { haalTerug, stelVraag, syncHerstel, syncPosten, syncSchermtijd, syncTaken, syncWachtrij } from './lib/github'
 import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
@@ -65,7 +63,6 @@ export default function App() {
   const [schermtijd, setSchermtijd] = useState<Record<string, SchermtijdType>>(() =>
     opslag.schermtijd(),
   )
-  const [posten, setPosten] = useState<Post[]>(() => opslag.posten())
   const [wachtend, setWachtend] = useState(() => aantalWachtend())
   const [syncBezig, setSyncBezig] = useState(false)
   const [syncFout, setSyncFout] = useState<string | undefined>()
@@ -132,23 +129,6 @@ export default function App() {
     setTaken(bewaarTaak({ ...taak, klaar, klaarOp: klaar ? nu : undefined, bijgewerkt: nu }))
     setWachtend(aantalWachtend())
     void synchroniseer()
-  }
-
-  function postToevoegen(invoer: {
-    datum: string
-    bedragCent: number
-    richting: Richting
-    tekst: string
-  }) {
-    const nu = nuISO()
-    setPosten(bewaarPost({ id: nieuwId(), ...invoer, tijdstip: nu, bijgewerkt: nu }))
-    setWachtend(aantalWachtend())
-    void synchroniseer()
-  }
-
-  function postVerwijderen(id: string) {
-    setPosten(verwijderPost(id))
-    setWachtend(aantalWachtend())
   }
 
   function herstelOpslaan(h: HerstelType) {
@@ -226,7 +206,6 @@ export default function App() {
           onGewijzigd={() => {
             setNotities(opslag.notities())
             setTaken(opslag.taken())
-            setPosten(opslag.posten())
             setHerstel(opslag.herstel())
             setSchermtijd(opslag.schermtijd())
             void synchroniseer()
@@ -257,7 +236,6 @@ export default function App() {
         <Tracking
           key={afgeleid}
           dataset={opslag.dataset()}
-          posten={posten}
           weekoverzicht={huidigWeekoverzicht()}
           onTab={(t) => setScherm({ naam: t })}
         />
@@ -270,7 +248,6 @@ export default function App() {
           brief={opslag.brief()}
           taken={taken}
           verrijking={opslag.verrijking()}
-          posten={posten}
           herstel={herstel[vandaagISO()]}
           schermtijd={schermtijd[gisterenISO()]}
           onAfvinken={taakAfvinken}
@@ -287,15 +264,12 @@ export default function App() {
           key={afgeleid}
           notities={notities}
           status={status}
-          posten={posten}
           taken={taken}
           verrijking={opslag.verrijking()}
           herstel={herstel}
           schermtijd={schermtijd}
           onNieuweNotitie={(datum) => setScherm({ naam: 'editor', datum })}
           onOpenNotitie={(n) => setScherm({ naam: 'detail', id: n.id })}
-          onPostToevoegen={postToevoegen}
-          onPostVerwijder={postVerwijderen}
           onTaakToevoegen={taakToevoegen}
           onTaakAfvinken={taakAfvinken}
           onInzicht={() => setScherm({ naam: 'inzicht' })}

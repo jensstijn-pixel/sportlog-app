@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import type { Dataset, Post, Weekoverzicht } from '../types'
+import type { Dataset, Weekoverzicht } from '../types'
 import Grafiek, { type Punt } from '../onderdelen/Grafiek'
 import { AiKaart, Kaart, KeuzeChips, PaginaKop, Sectiekop, TabBalk } from '../onderdelen/ui'
 import { euro } from '../lib/geld'
@@ -17,12 +17,10 @@ type Periode = '30' | '90' | 'alles'
 
 export default function Tracking({
   dataset,
-  posten,
   weekoverzicht,
   onTab,
 }: {
   dataset: Dataset | null
-  posten: Post[]
   weekoverzicht?: Weekoverzicht
   onTab: (tab: 'vandaag' | 'logboek') => void
 }) {
@@ -43,30 +41,20 @@ export default function Tracking({
   const reeks = (sleutel: 'hrv' | 'slaap_min' | 'readiness' | 'rusthartslag'): Punt[] =>
     herstel.map((h) => ({ datum: h.datum, waarde: (h as unknown as Record<string, number | null>)[sleutel] ?? null }))
 
-  /** Uitgaven per dag. Dagen zonder post tellen als nul: een dag waarop je
-   *  niets uitgaf is een echte meting, geen gat. */
-  const geldPunten = useMemo<Punt[]>(() => {
-    const uit = posten.filter((p) => p.richting === 'af' && p.datum >= grens)
-    if (!uit.length) return []
-    const perDag = new Map<string, number>()
-    for (const p of uit) perDag.set(p.datum, (perDag.get(p.datum) ?? 0) + p.bedragCent)
-    const dagen = [...perDag.keys()].sort()
-    const eerste = new Date(`${dagen[0]}T12:00:00`)
-    const laatste = new Date(`${dagen[dagen.length - 1]}T12:00:00`)
-    const punten: Punt[] = []
-    for (let d = new Date(eerste); d <= laatste; d.setDate(d.getDate() + 1)) {
-      const iso = d.toISOString().slice(0, 10)
-      punten.push({ datum: iso, waarde: (perDag.get(iso) ?? 0) / 100 })
-    }
-    return punten
-  }, [posten, grens])
-
-  const maandUit = useMemo(() => {
-    const maand = new Date().toISOString().slice(0, 7)
-    return posten
-      .filter((p) => p.richting === 'af' && p.datum.slice(0, 7) === maand)
-      .reduce((s, p) => s + p.bedragCent, 0)
-  }, [posten])
+  /** Uitgaven per week (ma–zo) uit het ABN-afschrift; de Mac rekent ze uit
+   *  (tracking.py). Potjes, beleggen en zakelijk tellen niet mee. Per week en
+   *  niet per dag: het afschrift komt één keer per week binnen. */
+  const geldWeken = useMemo(
+    () => (dataset?.geld_weken ?? []).filter((w) => w.datum >= grens),
+    [dataset, grens],
+  )
+  const geldPunten = useMemo<Punt[]>(
+    () => geldWeken.map((w) => ({ datum: w.datum, waarde: w.uit / 100 })),
+    [geldWeken],
+  )
+  const gemiddeldPerWeek = geldWeken.length
+    ? Math.round(geldWeken.reduce((s, w) => s + w.uit, 0) / geldWeken.length)
+    : 0
 
   const samenhang = dataset?.samenhang
   const dagenMetData = dataset?.herstel?.length ?? 0
@@ -77,7 +65,7 @@ export default function Tracking({
         titel="Tracking"
         onder={
           dagenMetData
-            ? `${dagenMetData} dagen · ${posten.length} geldposten`
+            ? `${dagenMetData} dagen · ${dataset?.geld_weken?.length ?? 0} geldweken`
             : 'Nog geen gegevens'
         }
       />
@@ -112,7 +100,7 @@ export default function Tracking({
       <div className="mt-2.5 grid grid-cols-1 gap-2.5">
         {geldPunten.length >= 2 ? (
           <Grafiek
-            titel="Uitgaven per dag"
+            titel="Uitgaven per week"
             punten={geldPunten}
             eenheid="€"
             formatteer={(n) => euro(Math.round(n * 100))}
@@ -122,14 +110,14 @@ export default function Tracking({
         ) : (
           <Kaart className="px-4 py-3.5">
             <p className="text-[14px] text-vaag">
-              Nog te weinig posten om een lijn te trekken. Voer een paar dagen in en er
-              verschijnt vanzelf een verloop.
+              Nog te weinig weken om een lijn te trekken. Zet elke zondag je ABN-afschrift in
+              iCloud → Geld en er verschijnt vanzelf een verloop.
             </p>
           </Kaart>
         )}
         <Kaart className="flex items-baseline justify-between px-4 py-3.5">
-          <span className="text-[15px] font-semibold">Deze maand eruit</span>
-          <span className="text-[20px] font-bold tabular-nums">€ {euro(maandUit)}</span>
+          <span className="text-[15px] font-semibold">Gemiddeld per week eruit</span>
+          <span className="text-[20px] font-bold tabular-nums">€ {euro(gemiddeldPerWeek)}</span>
         </Kaart>
       </div>
 
