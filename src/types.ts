@@ -141,6 +141,44 @@ export function nettoSchermtijd(s: Schermtijd | undefined): number | null {
   return Math.max(0, s.totaalMinuten - af)
 }
 
+/** Ochtendgewicht, voor de cut vanaf 29 sep 2026.
+ *
+ *  Eén meting per dag: 's ochtends, na het toilet, vóór eten en drinken. Een
+ *  losse dag schommelt makkelijk een kilo door vocht en zout; alleen het
+ *  gemiddelde over een week zegt iets. Die regel (en de bijstelling van de
+ *  kcal) rekent de Mac uit gewicht/<datum>.json. */
+export interface Gewicht {
+  /** YYYY-MM-DD */
+  datum: string
+  kg: number
+  bijgewerkt: string
+}
+
+/** Gemiddelde over de 7 dagen t/m `tot`, en over de 7 dagen daarvoor.
+ *
+ *  Pas vanaf 3 metingen per venster: met één of twee wegingen is een
+ *  "gemiddelde" nog een losse dag. */
+export function gewichtGemiddelden(
+  alles: Record<string, Gewicht>,
+  tot: string,
+): { deze: number | null; vorige: number | null } {
+  const dag = (iso: string, terug: number) => {
+    const d = new Date(`${iso}T12:00:00`)
+    d.setDate(d.getDate() - terug)
+    return d.toISOString().slice(0, 10)
+  }
+  const venster = (van: string, t: string) => {
+    const kgs = Object.values(alles)
+      .filter((g) => g.datum > van && g.datum <= t)
+      .map((g) => g.kg)
+    return kgs.length >= 3 ? kgs.reduce((a, b) => a + b, 0) / kgs.length : null
+  }
+  return {
+    deze: venster(dag(tot, 7), tot),
+    vorige: venster(dag(tot, 14), dag(tot, 7)),
+  }
+}
+
 export type Categorie = 'prive' | 'project' | 'huis' | 'admin' | 'overig'
 
 export const CATEGORIE_LABELS: Record<Categorie, string> = {

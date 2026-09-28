@@ -263,6 +263,41 @@ export async function syncSchermtijd(): Promise<SyncResultaat> {
   return { verzonden, wachtend: opslag.schermtijdWachtrij().length, fout: restfout }
 }
 
+/** Werkt de wachtrij met gewicht af: één bestand per dag, gewicht/<datum>.json. */
+export async function syncGewicht(): Promise<SyncResultaat> {
+  const inst = opslag.instellingen()
+  const wachtrij = opslag.gewichtWachtrij()
+  if (!inst.token) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Nog niet gekoppeld.' }
+  if (!wachtrij.length) return { verzonden: 0, wachtend: 0 }
+  if (!navigator.onLine) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Offline.' }
+
+  const alles = opslag.gewicht()
+  let verzonden = 0
+  let restfout: string | undefined
+
+  for (const datum of [...wachtrij]) {
+    const rij = alles[datum]
+    if (!rij) {
+      opslag.zetGewichtWachtrij(opslag.gewichtWachtrij().filter((d) => d !== datum))
+      continue
+    }
+    try {
+      await schrijfBestand(
+        inst,
+        `gewicht/${datum}.json`,
+        JSON.stringify(rij, null, 2) + '\n',
+        `Gewicht ${datum}`,
+      )
+      opslag.zetGewichtWachtrij(opslag.gewichtWachtrij().filter((d) => d !== datum))
+      verzonden++
+    } catch (e) {
+      restfout = e instanceof Error ? e.message : 'Onbekende fout.'
+      break
+    }
+  }
+  return { verzonden, wachtend: opslag.gewichtWachtrij().length, fout: restfout }
+}
+
 /** Haalt op wat de Mac heeft teruggeschreven: signalen, weekoverzicht, open
  *  vraag en de prioritering van de taken. */
 /** Werkt de wachtrij met geldposten af: één bestand per post, zoals bij taken.
@@ -361,14 +396,14 @@ export async function herstelPostenVanRepo(): Promise<number> {
   return opgehaald.length
 }
 
-/** Dagcijfers terughalen die per datum in één map staan (herstel, schermtijd).
+/** Dagcijfers terughalen die per datum in één map staan (herstel, schermtijd, gewicht).
  *
  *  Nodig gebleken op 8 sep 2026: wie de PWA van zijn beginscherm haalt en
  *  opnieuw toevoegt, krijgt van iOS een schone opslag. De repo had alles nog,
  *  maar de app kon herstel en schermtijd niet terughalen — die twee ontbraken
  *  in de herstelfuncties. Nu niet meer. */
 async function herstelDagmapVanRepo<T extends { datum: string }>(
-  map: 'herstel' | 'schermtijd',
+  map: 'herstel' | 'schermtijd' | 'gewicht',
   huidig: Record<string, T>,
 ): Promise<Record<string, T> | null> {
   const inst = opslag.instellingen()
@@ -407,6 +442,14 @@ export async function herstelSchermtijdVanRepo(): Promise<number> {
   const na = await herstelDagmapVanRepo('schermtijd', voor)
   if (!na) return 0
   opslag.zetSchermtijd(na)
+  return Object.keys(na).length - Object.keys(voor).length
+}
+
+export async function herstelGewichtVanRepo(): Promise<number> {
+  const voor = opslag.gewicht()
+  const na = await herstelDagmapVanRepo('gewicht', voor)
+  if (!na) return 0
+  opslag.zetGewicht(na)
   return Object.keys(na).length - Object.keys(voor).length
 }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   controleer,
+  herstelGewichtVanRepo,
   herstelHerstelVanRepo,
   herstelPostenVanRepo,
   herstelSchermtijdVanRepo,
@@ -64,12 +65,13 @@ export default function Instellingen({
     setBezig(true)
     setMelding(null)
     try {
-      const [notities, taken, posten, herstelDagen, schermDagen] = await Promise.all([
+      const [notities, taken, posten, herstelDagen, schermDagen, gewichtDagen] = await Promise.all([
         herstelVanRepo(),
         herstelTakenVanRepo(),
         herstelPostenVanRepo(),
         herstelHerstelVanRepo(),
         herstelSchermtijdVanRepo(),
+        herstelGewichtVanRepo(),
       ])
       const delen = [
         notities ? `${notities} notitie${notities === 1 ? '' : 's'}` : null,
@@ -77,6 +79,7 @@ export default function Instellingen({
         posten ? `${posten} geldpost${posten === 1 ? '' : 'en'}` : null,
         herstelDagen ? `${herstelDagen} dag${herstelDagen === 1 ? '' : 'en'} slaap` : null,
         schermDagen ? `${schermDagen} dag${schermDagen === 1 ? '' : 'en'} schermtijd` : null,
+        gewichtDagen ? `${gewichtDagen} dag${gewichtDagen === 1 ? '' : 'en'} gewicht` : null,
       ].filter(Boolean)
       setMelding({
         tekst: delen.length

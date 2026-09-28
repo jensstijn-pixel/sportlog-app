@@ -1,4 +1,4 @@
-import type { Dagbrief, Dataset, FinancienDuiding, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dagbrief, Dataset, FinancienDuiding, Gewicht, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -17,6 +17,8 @@ const K = {
   herstelWachtrij: 'sportlog.herstelWachtrij',
   schermtijd: 'sportlog.schermtijd',
   schermtijdWachtrij: 'sportlog.schermtijdWachtrij',
+  gewicht: 'sportlog.gewicht',
+  gewichtWachtrij: 'sportlog.gewichtWachtrij',
   dataset: 'sportlog.dataset',
   posten: 'sportlog.posten',
   postenWachtrij: 'sportlog.postenWachtrij',
@@ -97,6 +99,13 @@ export const opslag = {
   schermtijdWachtrij: () => lees<string[]>(K.schermtijdWachtrij, []),
   zetSchermtijdWachtrij: (datums: string[]) => schrijf(K.schermtijdWachtrij, datums),
 
+  /** Ochtendgewicht, per datum. */
+  gewicht: () => lees<Record<string, Gewicht>>(K.gewicht, {}),
+  zetGewicht: (g: Record<string, Gewicht>) => schrijf(K.gewicht, g),
+
+  gewichtWachtrij: () => lees<string[]>(K.gewichtWachtrij, []),
+  zetGewichtWachtrij: (datums: string[]) => schrijf(K.gewichtWachtrij, datums),
+
   /** Doorgerekende reeksen voor het Tracking-scherm (door de Mac gemaakt). */
   dataset: () => lees<Dataset | null>(K.dataset, null),
   zetDataset: (d: Dataset) => schrijf(K.dataset, d),
@@ -132,6 +141,15 @@ export function bewaarSchermtijd(s: Schermtijd): Record<string, Schermtijd> {
   opslag.zetSchermtijd(alles)
   const wachtrij = opslag.schermtijdWachtrij()
   if (!wachtrij.includes(s.datum)) opslag.zetSchermtijdWachtrij([...wachtrij, s.datum])
+  return alles
+}
+
+/** Gewicht van een dag opslaan; retourneert de nieuwe verzameling. */
+export function bewaarGewicht(g: Gewicht): Record<string, Gewicht> {
+  const alles = { ...opslag.gewicht(), [g.datum]: g }
+  opslag.zetGewicht(alles)
+  const wachtrij = opslag.gewichtWachtrij()
+  if (!wachtrij.includes(g.datum)) opslag.zetGewichtWachtrij([...wachtrij, g.datum])
   return alles
 }
 

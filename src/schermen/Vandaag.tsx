@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
-import type { Dagbrief, Herstel, Schermtijd, Taak, Verrijking } from '../types'
-import { nettoSchermtijd } from '../types'
+import type { Dagbrief, Gewicht, Herstel, Schermtijd, Taak, Verrijking } from '../types'
+import { gewichtGemiddelden, nettoSchermtijd } from '../types'
 import { vandaagISO } from '../lib/datum'
 import { Kaart, PaginaKop, TabBalk, Vinkje, Vouw } from '../onderdelen/ui'
 
@@ -74,9 +74,11 @@ export default function Vandaag({
   verrijking,
   herstel,
   schermtijd,
+  gewicht,
   onAfvinken,
   onHerstel,
   onSchermtijd,
+  onGewicht,
   onInstellingen,
   onTab,
 }: {
@@ -85,9 +87,11 @@ export default function Vandaag({
   verrijking: Record<string, Verrijking>
   herstel?: Herstel
   schermtijd?: Schermtijd
+  gewicht: Record<string, Gewicht>
   onAfvinken: (taak: Taak, klaar: boolean) => void
   onHerstel: () => void
   onSchermtijd: () => void
+  onGewicht: () => void
   onInstellingen: () => void
   onTab: (tab: 'logboek' | 'tracking') => void
 }) {
@@ -107,6 +111,9 @@ export default function Vandaag({
 
   const slaap = urenTekst(herstel?.slaapMinuten)
   const netto = urenTekst(nettoSchermtijd(schermtijd))
+  const kgVandaag = gewicht[vandaag]?.kg
+  const weekGem = gewichtGemiddelden(gewicht, vandaag).deze
+  const kg = (n: number) => n.toFixed(1).replace('.', ',')
 
   return (
     <div className="px-5 pt-[calc(env(safe-area-inset-top)+26px)] pb-28">
@@ -159,6 +166,22 @@ export default function Vandaag({
             <span className="block text-[12px] text-mut">Schermtijd gisteren</span>
             <span className="mt-[3px] block text-[16px] font-semibold">
               {netto ? `${netto} netto` : 'Nog niet ingevuld'}
+            </span>
+          </span>
+          <span className="text-vaag">›</span>
+        </button>
+        <div className="kaartlijn" />
+        <button
+          type="button"
+          onClick={onGewicht}
+          className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+        >
+          <span>
+            <span className="block text-[12px] text-mut">Gewicht vanochtend</span>
+            <span className="mt-[3px] block text-[16px] font-semibold">
+              {kgVandaag != null
+                ? `${kg(kgVandaag)} kg${weekGem != null ? ` · week ${kg(weekGem)}` : ''}`
+                : 'Nog niet ingevuld'}
             </span>
           </span>
           <span className="text-vaag">›</span>

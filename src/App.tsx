@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { Herstel as HerstelType, Notitie, Schermtijd as SchermtijdType, Taak } from './types'
+import type { Gewicht as GewichtType, Herstel as HerstelType, Notitie, Schermtijd as SchermtijdType, Taak } from './types'
 import {
+  bewaarGewicht,
   bewaarHerstel,
   bewaarNotitie,
   bewaarSchermtijd,
@@ -9,11 +10,21 @@ import {
   opslag,
   verwijderNotitie,
 } from './lib/opslag'
-import { haalTerug, stelVraag, syncHerstel, syncPosten, syncSchermtijd, syncTaken, syncWachtrij } from './lib/github'
+import {
+  haalTerug,
+  stelVraag,
+  syncGewicht,
+  syncHerstel,
+  syncPosten,
+  syncSchermtijd,
+  syncTaken,
+  syncWachtrij,
+} from './lib/github'
 import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
 import Logboek from './schermen/Logboek'
 import Editor from './schermen/Editor'
 import Detail from './schermen/Detail'
+import Gewicht from './schermen/Gewicht'
 import Inzicht from './schermen/Inzicht'
 import Instellingen from './schermen/Instellingen'
 import Herstel from './schermen/Herstel'
@@ -29,6 +40,7 @@ type Scherm =
   | { naam: 'instellingen' }
   | { naam: 'herstel' }
   | { naam: 'schermtijd' }
+  | { naam: 'gewicht' }
   | { naam: 'tracking' }
   | { naam: 'vandaag' }
 
@@ -51,6 +63,7 @@ function aantalWachtend(): number {
     opslag.takenWachtrij().length +
     opslag.herstelWachtrij().length +
     opslag.schermtijdWachtrij().length +
+    opslag.gewichtWachtrij().length +
     opslag.postenWachtrij().length
   )
 }
@@ -63,6 +76,7 @@ export default function App() {
   const [schermtijd, setSchermtijd] = useState<Record<string, SchermtijdType>>(() =>
     opslag.schermtijd(),
   )
+  const [gewicht, setGewicht] = useState<Record<string, GewichtType>>(() => opslag.gewicht())
   const [wachtend, setWachtend] = useState(() => aantalWachtend())
   const [syncBezig, setSyncBezig] = useState(false)
   const [syncFout, setSyncFout] = useState<string | undefined>()
@@ -79,6 +93,7 @@ export default function App() {
       await syncTaken(),
       await syncHerstel(),
       await syncSchermtijd(),
+      await syncGewicht(),
       await syncPosten(),
     ]
     setWachtend(aantalWachtend())
@@ -145,6 +160,13 @@ export default function App() {
     void synchroniseer()
   }
 
+  function gewichtOpslaan(g: GewichtType) {
+    setGewicht(bewaarGewicht(g))
+    setWachtend(aantalWachtend())
+    setScherm({ naam: 'vandaag' })
+    void synchroniseer()
+  }
+
   // Eén woord over de koppeling, voor in de subtitel van het logboek.
   const status = !opslag.instellingen().token
     ? 'niet gekoppeld'
@@ -208,6 +230,7 @@ export default function App() {
             setTaken(opslag.taken())
             setHerstel(opslag.herstel())
             setSchermtijd(opslag.schermtijd())
+            setGewicht(opslag.gewicht())
             void synchroniseer()
           }}
         />
@@ -231,11 +254,22 @@ export default function App() {
         />
       )
 
+    case 'gewicht':
+      return (
+        <Gewicht
+          bestaand={gewicht[vandaagISO()]}
+          alles={gewicht}
+          onOpslaan={gewichtOpslaan}
+          onTerug={() => setScherm({ naam: 'vandaag' })}
+        />
+      )
+
     case 'tracking':
       return (
         <Tracking
           key={afgeleid}
           dataset={opslag.dataset()}
+          gewicht={gewicht}
           weekoverzicht={huidigWeekoverzicht()}
           onTab={(t) => setScherm({ naam: t })}
         />
@@ -250,9 +284,11 @@ export default function App() {
           verrijking={opslag.verrijking()}
           herstel={herstel[vandaagISO()]}
           schermtijd={schermtijd[gisterenISO()]}
+          gewicht={gewicht}
           onAfvinken={taakAfvinken}
           onHerstel={() => setScherm({ naam: 'herstel' })}
           onSchermtijd={() => setScherm({ naam: 'schermtijd' })}
+          onGewicht={() => setScherm({ naam: 'gewicht' })}
           onInstellingen={() => setScherm({ naam: 'instellingen' })}
           onTab={(t) => setScherm({ naam: t })}
         />
