@@ -112,8 +112,22 @@ export default function Vandaag({
   const slaap = urenTekst(herstel?.slaapMinuten)
   const netto = urenTekst(nettoSchermtijd(schermtijd))
   const kgVandaag = gewicht[vandaag]?.kg
-  const weekGem = gewichtGemiddelden(gewicht, vandaag).deze
+  const { deze: weekGem, vorige: vorigeGem } = gewichtGemiddelden(gewicht, vandaag)
   const kg = (n: number) => n.toFixed(1).replace('.', ',')
+  // Zelfde zin als de brief (module_gewicht): het weekgemiddelde is de maat,
+  // één ochtend schommelt met vocht en zout.
+  const weekVerschil =
+    weekGem != null && vorigeGem != null ? Math.round((weekGem - vorigeGem) * 10) / 10 : null
+  const weekRegel =
+    weekGem == null
+      ? null
+      : `Week ${kg(weekGem)} kg${
+          weekVerschil == null
+            ? ''
+            : Math.abs(weekVerschil) < 0.1
+              ? ' · gelijk aan de week ervoor'
+              : ` · ${kg(Math.abs(weekVerschil))} ${weekVerschil > 0 ? 'hoger' : 'lager'} dan de week ervoor`
+        }`
 
   return (
     <div className="px-5 pt-[calc(env(safe-area-inset-top)+26px)] pb-28">
@@ -179,10 +193,11 @@ export default function Vandaag({
           <span>
             <span className="block text-[12px] text-mut">Gewicht vanochtend</span>
             <span className="mt-[3px] block text-[16px] font-semibold">
-              {kgVandaag != null
-                ? `${kg(kgVandaag)} kg${weekGem != null ? ` · week ${kg(weekGem)}` : ''}`
-                : 'Nog niet ingevuld'}
+              {kgVandaag != null ? `${kg(kgVandaag)} kg` : 'Nog niet ingevuld'}
             </span>
+            {weekRegel && (
+              <span className="mt-[2px] block text-[13px] text-mut">{weekRegel}</span>
+            )}
           </span>
           <span className="text-vaag">›</span>
         </button>
