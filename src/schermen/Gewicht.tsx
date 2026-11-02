@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import type { Gewicht as GewichtType } from '../types'
-import { gewichtGemiddelden } from '../types'
+import type { Gewicht as GewichtType, Weegschaal } from '../types'
+import { gewichtGemiddelden, WEEGSCHALEN } from '../types'
 import { korteDatum, nuISO, vandaagISO } from '../lib/datum'
-import { Eyebrow, Titel } from '../onderdelen/ui'
+import { Eyebrow, Schakelaar, Titel } from '../onderdelen/ui'
 
 /** Het ochtendgewicht invullen.
  *
@@ -29,6 +29,13 @@ export default function Gewicht({
 }) {
   const dag = datum ?? bestaand?.datum ?? vandaagISO()
   const [tekst, setTekst] = useState(bestaand ? kgTekst(bestaand.kg) : '')
+  // Standaard de weegschaal van de laatste meting die er een had.
+  const laatste = Object.values(alles)
+    .filter((g) => g.weegschaal)
+    .sort((a, b) => b.datum.localeCompare(a.datum))[0]?.weegschaal
+  const [weegschaal, setWeegschaal] = useState<Weegschaal>(
+    bestaand?.weegschaal ?? laatste ?? 'withings-pa',
+  )
 
   const schoon = tekst.replace(',', '.').trim()
   const n = schoon ? Number(schoon) : NaN
@@ -42,7 +49,7 @@ export default function Gewicht({
 
   function opslaan() {
     if (kg == null) return
-    onOpslaan({ datum: dag, kg, bijgewerkt: nuISO() })
+    onOpslaan({ datum: dag, kg, bijgewerkt: nuISO(), weegschaal })
   }
 
   return (
@@ -66,7 +73,7 @@ export default function Gewicht({
 
       <div className="kaart mt-4 rounded-[16px] p-4">
         <label className="block text-[13px] font-semibold text-tekst/70" htmlFor="gewicht-kg">
-          Weegschaal
+          Gewicht
         </label>
         <div className="mt-2 flex items-center gap-2">
           <input
@@ -83,6 +90,10 @@ export default function Gewicht({
         {schoon && kg == null && (
           <p className="mt-2 text-[12px] font-semibold text-accent">Dat lijkt een tikfout.</p>
         )}
+        <div className="mt-4 text-[13px] font-semibold text-tekst/70">Gewogen bij</div>
+        <div className="mt-2">
+          <Schakelaar waarde={weegschaal} opties={WEEGSCHALEN} onKies={setWeegschaal} />
+        </div>
       </div>
 
       <div className="kaart mt-4 rounded-[16px] px-4 py-4">

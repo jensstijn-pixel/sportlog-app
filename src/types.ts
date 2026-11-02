@@ -152,7 +152,18 @@ export interface Gewicht {
   datum: string
   kg: number
   bijgewerkt: string
+  /** Op welke weegschaal (sinds 2 nov 2026; de XXL is kapot). Elke weegschaal
+   *  weegt net iets anders, dus zo blijft een sprong in de reeks te verklaren.
+   *  Ontbreekt bij oudere metingen: die zijn van de XXL. */
+  weegschaal?: Weegschaal
 }
+
+export type Weegschaal = 'withings-pa' | 'withings-ma'
+
+export const WEEGSCHALEN: { waarde: Weegschaal; label: string }[] = [
+  { waarde: 'withings-pa', label: 'Pa' },
+  { waarde: 'withings-ma', label: 'Ma' },
+]
 
 /** Gemiddelde over de 7 dagen t/m `tot`, en over de 7 dagen daarvoor.
  *
