@@ -6,7 +6,9 @@
  *  De app rekent hier niets aan; hij toont het. */
 
 export interface BregjeDienst { naam: string; van: string; tot: string; uren: number; kosten: number }
-export interface VoorstelPersoon { naam: string; afdeling: string; van: string; tot: string | null; uren: number; kosten: number }
+export interface VoorstelPersoon { naam: string; afdeling: string; van: string; tot: string | null; uren: number; kosten: number; rollen?: string[] }
+export interface RoosterPersoon { naam: string; afdeling: string; van: string; tot: string; uren: number; kosten: number; rol: string }
+export interface VoorstelVersie { tijd: string; kosten: number; pct: number | null; toelichting: string | null; mensen: { naam: string; afdeling: string; van: string; tot: string | null; kosten: number; rol: string }[] }
 
 export interface Bregje {
   gemaakt: string
@@ -31,6 +33,10 @@ export interface Bregje {
     verwacht: { gasten: number; omzetEx: number; budget: number; uitleg: string }
     sluit: { keuken: string | null; bediening: string | null }
     voorstel: { kosten: number; pct: number | null; mensen: VoorstelPersoon[] } | null
+    /** Sinds 11 nov 2026: het rooster uit de personeelsapp (null als die niet bereikbaar was). */
+    rooster?: { kosten: number; pct: number | null; mensen: RoosterPersoon[] } | null
+    /** Sinds 11 nov 2026: elke vastgelegde versie van het voorstel, oud → nieuw. */
+    versies?: VoorstelVersie[]
   }
 }
 
@@ -50,4 +56,8 @@ export interface Rapport {
   komend?: { datum: string; naam: string; menu: boolean; noot?: string }[]
   meppie?: { label: string; waarde: string; ok: boolean }[]
   bezettingNoot?: string
+  /** Gasten en tafels die per kwartier binnenkomen (vandaag). */
+  aankomsten?: { tijd: string; gasten: number; tafels?: number }[]
+  /** Guestplan-tellers van de komende dagen. */
+  vooruit?: { datum: string; reserveringen: number; gasten: number; groepen?: { naam: string; aantal: number; tijd: string; menu: boolean }[] }[]
 }

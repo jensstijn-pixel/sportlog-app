@@ -1,12 +1,13 @@
 import { useState, type ReactNode } from 'react'
 import type { Herstel, Taak } from '../types'
-import { Balk, Ic, Pijl, Spark, Staven, Vinkje } from './teken'
+import { Ic, Pijl, Spark, Staven, Vinkje } from './teken'
 import { eur, gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
 import { TijdGrafiek } from './TijdGrafiek'
 import { TrainingPagina } from './TrainingPagina'
 import { GewichtPagina, SchermtijdPagina } from './LichaamPaginas'
 import { TakenPagina } from './TakenPagina'
 import { TrendsPagina } from './TrendsPagina'
+import { ZaakPagina } from './ZaakPagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -152,45 +153,6 @@ function NietVers({ m }: { m: Model }) {
   return <p className="d-voetnoot" style={{ margin: '-12px 0 18px' }}>Rapport van {korteDag(m.rapport.datum)}: de ochtendroutine heeft vandaag nog niet gedraaid.</p>
 }
 
-function Zaak({ m }: PaginaProps) {
-  const bv = m.bregje?.vandaag
-  const r = m.rapport
-  const per = (afd: string) => bv?.voorstel?.mensen.filter((p) => p.afdeling === afd) ?? []
-  const sluit = (afd: string) => (afd === 'keuken' ? bv?.sluit.keuken : bv?.sluit.bediening)
-  return (
-    <div className="d-pagina">
-      <Kop titel="Vandaag in de zaak" sub={bv ? `${bv.reservering ? `${bv.reservering.aantal ?? '?'} reserveringen · ${bv.reservering.gasten} gasten · ` : ''}verwacht ~${bv.verwacht.gasten}` : 'Nog geen gegevens'} />
-      <NietVers m={m} />
-      {bv && (
-        <div className="d-lijst d-grafiek">
-          <div className="kop"><b className="d-num">{bv.voorstel?.pct != null ? komma(bv.voorstel.pct) : '–'}<small>% loon in het voorstel</small></b><span>{bv.voorstel ? `${eur(bv.voorstel.kosten)} · ` : ''}budget {eur(bv.verwacht.budget)}</span></div>
-          <Balk pct={((bv.voorstel?.pct ?? 0) / 40) * 100} kleur="var(--orange)" doel={(27 / 40) * 100} />
-          <p className="d-voetnoot" style={{ margin: '10px 0 0' }}>Verwachte sluit: keuken {bv.sluit.keuken ?? '?'}, bediening {bv.sluit.bediening ?? '?'}. {bv.verwacht.uitleg}.</p>
-        </div>
-      )}
-      {bv?.voorstel ? (
-        <div className="d-twee">
-          {(['keuken', 'bediening'] as const).map((afd) => (
-            <div key={afd}><H2>{afd === 'keuken' ? 'Keuken' : 'Voorkant'}</H2>
-              <Lijst>{per(afd).map((p) => <Rij key={p.naam} l={p.naam} s={`${komma(p.uren)} u · ${eur(p.kosten)}`} w={`${p.van}–${p.tot ?? `sluit (~${sluit(afd) ?? '?'})`}`} />)}</Lijst>
-            </div>
-          ))}
-        </div>
-      ) : bv ? <><H2>Voorstel</H2><Leeg>Nog niet vastgelegd.</Leeg></> : null}
-      {r?.bezettingNoot && <p className="d-voetnoot">{r.bezettingNoot}</p>}
-      <H2>Bijzonderheden</H2>
-      {r?.dag ? (
-        <Lijst>
-          <Rij l={r.dag.groepen.length ? r.dag.groepen.map((g) => `${g.naam}: ${g.aantal} p om ${g.tijd}${g.menu ? '' : ' (menu ontbreekt)'}`).join(' · ') : 'Geen groepen ≥ 12'} />
-          <Rij l={r.dag.allergieen.length ? r.dag.allergieen.join(' · ') : 'Geen allergieën'} />
-          {r.dag.wensen.map((w) => { const [wie, ...wat] = w.split(':'); return <Rij key={w} l={wie} s={wat.join(':').trim() || undefined} /> })}
-          {r.dag.menus.map((x) => <Rij key={x} l={x} w="PDF klaar" wc="d-goed" />)}
-        </Lijst>
-      ) : <Leeg>Nog geen Guestplan-dag.</Leeg>}
-    </div>
-  )
-}
-
 function Omzet({ m }: PaginaProps) {
   const g = m.bregje?.gisteren
   if (!g) return <div className="d-pagina smal"><Kop titel="Omzet" sub="Nog geen kassarapport verwerkt" /></div>
@@ -311,5 +273,5 @@ function Meer({ onNaar, m }: PaginaProps) {
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
   herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina, trends: TrendsPagina,
-  zaak: Zaak, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
+  zaak: ZaakPagina, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }

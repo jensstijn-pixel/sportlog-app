@@ -301,3 +301,8 @@ button.d-rij:disabled { opacity: .5; cursor: default; }
 .d-trend .kop svg { color: var(--label3); }
 .d-trend .d-spark { margin-top: 10px; }
 .d-trend .d-onder { white-space: normal; }
+
+/* ── Vandaag in de zaak (11 nov 2026) ── */
+.d-rollen { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.d-rollen span { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; }
+.d-blokje { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; }

@@ -257,7 +257,7 @@ export function Overzicht({
             <>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
                 <span className="d-groot" style={{ margin: 0 }}>{bv.voorstel.pct != null ? komma(bv.voorstel.pct) : '–'}<small>%</small></span>
-                <span className="d-onder" style={{ margin: 0 }}>voorstel {eur(bv.voorstel.kosten)} · budget {eur(bv.verwacht.budget)}</span>
+                <span className="d-onder" style={{ margin: 0 }}>{bv.rooster?.pct != null ? `rooster ${komma(bv.rooster.pct)}% → ` : ''}voorstel {eur(bv.voorstel.kosten)} · budget {eur(bv.verwacht.budget)}</span>
               </div>
               <div style={{ marginTop: 8 }}><Balk pct={((bv.voorstel.pct ?? 0) / 40) * 100} kleur="var(--orange)" doel={(27 / 40) * 100} /></div>
               <div className="d-gantt">
