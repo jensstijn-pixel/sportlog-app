@@ -85,6 +85,25 @@ export interface Rapport {
   groepen?: Groep[]
   /** Wat de routine de laatste 14 dagen in Guestplan zette (reserveringen-log.md, zonder tel/mail). */
   guestplanLog?: { op: string; naam: string; datum: string | null; datumTekst: string; tijd: string; aantal: string; wat: string }[]
+  /** Geschiedenis 14 dagen + de temperatuurlijst van de laatste dinsdag (bregje-mail/meppie.json). */
+  meppieDetail?: {
+    log: Record<string, { keuken?: string; bediening?: string; temperatuur?: string; noot?: string }>
+    temperatuur: {
+      datum: string; geregistreerd?: string
+      items: { groep: string; item: string; product: string | null; temp: number | null; marge: string; vinkjes: boolean | null; actie: string | null; afwijking: boolean }[]
+      open: { groep: string; item: string; norm?: string; wacht_op?: string }[]
+    } | null
+  }
+}
+
+/** Wat Jens via de app aan Meppie doorgeeft (sportlog-data/meppie/<id>.json); de routine verwerkt het. */
+export interface MeppieMelding {
+  id: string
+  soort: 'terugkoelen' | 'afwijking'
+  voorDatum: string
+  gemaakt: string
+  data: { product?: string; aanvang?: number; na2?: number; na5?: number; actie?: string; lijst?: string; wat?: string }
+  verwerkt?: { op: string; wat: string }
 }
 
 export interface Groep {

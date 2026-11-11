@@ -1,6 +1,6 @@
 import type { Dagbrief, Dataset, FinancienDuiding, Gewicht, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 import { nuISO, weekJaar, weeknummer } from './datum'
-import type { Bregje, Rapport } from '../dashboard/typen'
+import type { Bregje, MeppieMelding, Rapport } from '../dashboard/typen'
 import { opslag, type Instellingen } from './opslag'
 
 /** Dunne laag over de GitHub Contents API. De privé data-repo is puur transport
@@ -546,7 +546,7 @@ export async function haalBijVanRepo(): Promise<number> {
   let erbij = 0
 
   async function map<T>(
-    naam: 'herstel' | 'gewicht' | 'schermtijd' | 'taken' | 'notities',
+    naam: 'herstel' | 'gewicht' | 'schermtijd' | 'taken' | 'notities' | 'meppie',
     lokaalHeeft: (sleutel: string) => boolean,
     wacht: string[],
     altijdBijInit: (sleutel: string) => boolean,
@@ -592,6 +592,36 @@ export async function haalBijVanRepo(): Promise<number> {
     opslag.zetNotities([...per.values()].sort((a, b) => (a.tijdstip < b.tijdstip ? 1 : -1)))
   })
 
+  await map<MeppieMelding>('meppie', (id) => opslag.meppie().some((x) => x.id === id), opslag.meppieWachtrij(), () => true, (items) => {
+    const per = new Map(opslag.meppie().map((x) => [x.id, x]))
+    for (const x of items) if (x.id) per.set(x.id, x)
+    opslag.zetMeppie([...per.values()].sort((a, b) => b.gemaakt.localeCompare(a.gemaakt)))
+  })
+
   opslag.zetRepoSha(shas)
   return erbij
+}
+
+/** Meppie-meldingen naar de repo: één bestand per melding (sinds 11 nov 2026). */
+export async function syncMeppie(): Promise<SyncResultaat> {
+  const inst = opslag.instellingen()
+  const wachtrij = opslag.meppieWachtrij()
+  if (!inst.token) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Nog niet gekoppeld.' }
+  if (!wachtrij.length) return { verzonden: 0, wachtend: 0 }
+  if (!navigator.onLine) return { verzonden: 0, wachtend: wachtrij.length, fout: 'Offline.' }
+  let verzonden = 0
+  let restfout: string | undefined
+  for (const id of [...wachtrij]) {
+    const m = opslag.meppie().find((x) => x.id === id)
+    if (!m) { opslag.zetMeppieWachtrij(opslag.meppieWachtrij().filter((x) => x !== id)); continue }
+    try {
+      await schrijfBestand(inst, `meppie/${id}.json`, JSON.stringify(m, null, 2) + '\n', `Meppie: ${m.soort} ${m.voorDatum}`)
+      opslag.zetMeppieWachtrij(opslag.meppieWachtrij().filter((x) => x !== id))
+      verzonden++
+    } catch (e) {
+      restfout = e instanceof Error ? e.message : 'Onbekende fout.'
+      break
+    }
+  }
+  return { verzonden, wachtend: opslag.meppieWachtrij().length, fout: restfout }
 }

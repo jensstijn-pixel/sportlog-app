@@ -1,5 +1,5 @@
 import type { Dagbrief, Dataset, FinancienDuiding, Gewicht, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
-import type { Bregje, Rapport } from '../dashboard/typen'
+import type { Bregje, MeppieMelding, Rapport } from '../dashboard/typen'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -28,6 +28,8 @@ const K = {
   bregje: 'sportlog.bregje',
   rapport: 'sportlog.rapport',
   repoSha: 'sportlog.repoSha',
+  meppie: 'sportlog.meppie',
+  meppieWachtrij: 'sportlog.meppieWachtrij',
 }
 
 export interface Instellingen {
@@ -140,6 +142,20 @@ export const opslag = {
   /** Vingerafdruk (sha) per bestand in de repo, zodat bijhalen alleen ophaalt wat veranderde. */
   repoSha: () => lees<Record<string, string>>(K.repoSha, {}),
   zetRepoSha: (s: Record<string, string>) => schrijf(K.repoSha, s),
+
+  /** Meldingen voor Meppie (Terugkoelen, afwijkingen), sinds 11 nov 2026. */
+  meppie: () => lees<MeppieMelding[]>(K.meppie, []),
+  zetMeppie: (m: MeppieMelding[]) => schrijf(K.meppie, m),
+  meppieWachtrij: () => lees<string[]>(K.meppieWachtrij, []),
+  zetMeppieWachtrij: (ids: string[]) => schrijf(K.meppieWachtrij, ids),
+}
+
+/** Een Meppie-melding bewaren en in de wachtrij zetten. */
+export function bewaarMeppie(m: MeppieMelding): MeppieMelding[] {
+  const lijst = [m, ...opslag.meppie().filter((x) => x.id !== m.id)]
+  opslag.zetMeppie(lijst)
+  opslag.zetMeppieWachtrij([...new Set([...opslag.meppieWachtrij(), m.id])])
+  return lijst
 }
 
 /** Herstelcijfers van een dag opslaan; retourneert de nieuwe verzameling. */

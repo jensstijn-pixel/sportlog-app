@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { Herstel, Taak } from '../types'
+import type { MeppieMelding } from './typen'
 import { Ic, Pijl, Staven, Vinkje } from './teken'
 import { eur, gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
 import { TijdGrafiek } from './TijdGrafiek'
@@ -10,6 +11,7 @@ import { TrendsPagina } from './TrendsPagina'
 import { ZaakPagina } from './ZaakPagina'
 import { OmzetPagina } from './OmzetPagina'
 import { MailPagina } from './MailPagina'
+import { MeppiePagina } from './MeppiePagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -47,6 +49,9 @@ export interface PaginaProps {
   onTaakToevoegen: (tekst: string) => void
   /** Hele taak opslaan (bewerken, plannen, subtaken, verwijderen). */
   onTaakBewaar: (t: Taak) => void
+  /** Meppie-meldingen (Terugkoelen, afwijkingen) en versturen. */
+  meppie: MeppieMelding[]
+  onMeppieMelding: (m: MeppieMelding) => void
   onNotitie: () => void
 }
 
@@ -150,22 +155,6 @@ function HerstelPagina({ m, onInvul }: PaginaProps) {
 }
 
 // ── Bregje ──
-function NietVers({ m }: { m: Model }) {
-  if (!m.rapport || m.rapportVanVandaag) return null
-  return <p className="d-voetnoot" style={{ margin: '-12px 0 18px' }}>Rapport van {korteDag(m.rapport.datum)}: de ochtendroutine heeft vandaag nog niet gedraaid.</p>
-}
-
-function Meppie({ m }: PaginaProps) {
-  const r = m.rapport
-  return (
-    <div className="d-pagina smal">
-      <Kop titel="Meppie" sub="Registraties uit de ochtendroutine" />
-      <NietVers m={m} />
-      {r?.meppie?.length ? <Lijst>{r.meppie.map((x) => <Rij key={x.label} l={x.label} w={x.waarde} wc={x.ok ? 'd-goed' : 'd-let'} />)}</Lijst> : <Leeg>Nog niets gemeld.</Leeg>}
-      <p className="d-voetnoot">Terugkoelen wordt één keer per week echt gemeten. Lever de waardes aan, dan vul ik ze in.</p>
-    </div>
-  )
-}
 
 // ── Week ──
 function Geld({ m }: PaginaProps) {
@@ -221,5 +210,5 @@ function Meer({ onNaar, m }: PaginaProps) {
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
   herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina, trends: TrendsPagina,
-  zaak: ZaakPagina, omzet: OmzetPagina, mail: MailPagina, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
+  zaak: ZaakPagina, omzet: OmzetPagina, mail: MailPagina, meppie: MeppiePagina, geld: Geld, brief: Brief, meer: Meer,
 }

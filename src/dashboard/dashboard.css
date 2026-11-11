@@ -338,3 +338,15 @@ button.d-rij:disabled { opacity: .5; cursor: default; }
 .d-groepdatum small { font-size: 11px; color: var(--label2); text-transform: uppercase; }
 .d-groep .tekst small.d-let { color: var(--orange); }
 .d-logregel .tekst small.kort { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* ── Meppie (11 nov 2026) ── */
+.d-formulier { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.d-formulier label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--label2); min-width: 0; }
+.d-formulier label.breed, .d-formulier .breed { grid-column: 1 / -1; }
+.d-formulier input, .d-formulier select, .d-formulier textarea { width: 100%; border: 0; border-radius: 10px; background: var(--card2); color: var(--label); padding: 10px 12px; font: inherit; font-size: 15px; }
+.d-formulier input:focus, .d-formulier select:focus, .d-formulier textarea:focus { outline: 2px solid var(--blue); }
+.d-linkknop { color: var(--blue); font-size: 13px; }
+.d-histrij { display: grid; grid-template-columns: 90px minmax(0, 1fr); align-items: center; gap: 8px; padding: 4px 0; font-size: 13px; }
+.d-histcellen { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 3px; }
+.d-histcellen i { height: 18px; border-radius: 4px; display: block; }
+.d-histrij.as small { font-size: 10px; color: var(--label2); text-align: center; }

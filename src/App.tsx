@@ -6,6 +6,7 @@ import {
   bewaarNotitie,
   bewaarSchermtijd,
   bewaarTaak,
+  bewaarMeppie,
   nieuwId,
   opslag,
   verwijderNotitie,
@@ -20,6 +21,7 @@ import {
   syncSchermtijd,
   syncTaken,
   syncWachtrij,
+  syncMeppie,
 } from './lib/github'
 import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
 import Gewicht from './schermen/Gewicht'
@@ -31,6 +33,7 @@ import { Overzicht, type Invul } from './dashboard/Overzicht'
 import { PAGINAS } from './dashboard/Paginas'
 import { LogboekPagina } from './dashboard/LogboekPagina'
 import { bouwModel } from './dashboard/model'
+import type { MeppieMelding } from './dashboard/typen'
 
 /** Sinds 11 nov 2026: het dashboard (zijbalk + widgets) is de schil. Een `pagina` is alles wat
  *  in de zijbalk staat; de overige schermen (invullen, notitie bewerken) openen daarbovenop en
@@ -49,7 +52,8 @@ function aantalWachtend(): number {
     opslag.herstelWachtrij().length +
     opslag.schermtijdWachtrij().length +
     opslag.gewichtWachtrij().length +
-    opslag.postenWachtrij().length
+    opslag.postenWachtrij().length +
+    opslag.meppieWachtrij().length
   )
 }
 
@@ -88,6 +92,7 @@ export default function App() {
       await syncSchermtijd(),
       await syncGewicht(),
       await syncPosten(),
+      await syncMeppie(),
     ]
     setWachtend(aantalWachtend())
     setSyncFout(uitkomsten.find((r) => r.fout)?.fout)
@@ -100,6 +105,7 @@ export default function App() {
         setHerstel(opslag.herstel())
         setSchermtijd(opslag.schermtijd())
         setGewicht(opslag.gewicht())
+        setMeppie(opslag.meppie())
       }
       setAfgeleid((n) => n + 1)
     } catch {
@@ -143,6 +149,13 @@ export default function App() {
   function taakAfvinken(taak: Taak, klaar: boolean) {
     const nu = nuISO()
     setTaken(bewaarTaak({ ...taak, klaar, klaarOp: klaar ? nu : undefined, bijgewerkt: nu }))
+    setWachtend(aantalWachtend())
+    void synchroniseer()
+  }
+
+  const [meppie, setMeppie] = useState(() => opslag.meppie())
+  function meppieMelden(m: MeppieMelding) {
+    setMeppie(bewaarMeppie(m))
     setWachtend(aantalWachtend())
     void synchroniseer()
   }
@@ -254,7 +267,8 @@ export default function App() {
         const P = PAGINAS[scherm.p]
         return P ? (
           <P key={afgeleid} m={model} onNaar={naar} onInvul={invullen} onTaakAfvinken={taakAfvinken}
-            onTaakToevoegen={taakToevoegen} onTaakBewaar={taakBewaren} onNotitie={nieuweNotitie} />
+            onTaakToevoegen={taakToevoegen} onTaakBewaar={taakBewaren} onNotitie={nieuweNotitie}
+            meppie={meppie} onMeppieMelding={meppieMelden} />
         ) : null
       }
     }
