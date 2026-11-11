@@ -5,7 +5,7 @@ import { MAX_SCHERMTIJD, cutTempo, eur, komma, korteDag, perDag, subtakenVan, uu
 import { useOpWerkKlaar } from './TakenPagina'
 import type { Pagina } from './Schil'
 
-export type Invul = 'herstel' | 'gewicht' | 'schermtijd'
+export type Invul = 'herstel' | 'gewicht' | 'schermtijd' | 'ochtend'
 
 /** Afgevinkte acties uit het ochtendrapport: alleen op dit apparaat, per dag. */
 export function useActiesKlaar(datum: string | undefined) {
@@ -79,6 +79,9 @@ export function Overzicht({
         {m.dag.dienst ? ` · dienst ${m.dag.dienst.van}–${m.dag.dienst.tot}` : ''}
       </p>
       <div className="d-check" aria-label="Ochtend-checklist">
+        {m.checklist.filter((c) => c.naar && !c.klaar).length > 1 && (
+          <button type="button" className="d-chip actie" onClick={() => onInvul('ochtend')}>Ochtend invullen</button>
+        )}
         {m.checklist.map((c) => {
           const inhoud = (<><span className="st">{c.klaar && <VinkIcoon />}</span>{c.label}{!c.klaar && <small>{c.detail}</small>}</>)
           return c.naar ? (

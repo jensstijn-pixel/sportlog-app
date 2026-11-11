@@ -23,26 +23,19 @@ import {
   syncWachtrij,
   syncMeppie,
 } from './lib/github'
-import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
-import Gewicht from './schermen/Gewicht'
+import { nuISO, vandaagISO } from './lib/datum'
 import { InstellingenPagina } from './dashboard/InstellingenPagina'
-import Herstel from './schermen/Herstel'
-import Schermtijd from './schermen/Schermtijd'
+import { InvulPaneel, type InvulSoort } from './dashboard/InvulPaneel'
 import { Schil, type Pagina } from './dashboard/Schil'
-import { Overzicht, type Invul } from './dashboard/Overzicht'
+import { Overzicht } from './dashboard/Overzicht'
 import { PAGINAS } from './dashboard/Paginas'
 import { LogboekPagina } from './dashboard/LogboekPagina'
 import { bouwModel } from './dashboard/model'
 import type { MeppieMelding } from './dashboard/typen'
 
 /** Sinds 11 nov 2026: het dashboard (zijbalk + widgets) is de schil. Een `pagina` is alles wat
- *  in de zijbalk staat; de overige schermen (invullen, notitie bewerken) openen daarbovenop en
- *  gaan met "terug" naar de laatste pagina. */
-type Scherm =
-  | { naam: 'pagina'; p: Pagina }
-  | { naam: 'herstel' }
-  | { naam: 'schermtijd' }
-  | { naam: 'gewicht' }
+ *  in de zijbalk staat; invullen (Oura, gewicht, schermtijd) opent als paneel daarbovenop. */
+type Scherm = { naam: 'pagina'; p: Pagina }
 
 /** Alles wat nog naar GitHub moet, over alle wachtrijen heen. */
 function aantalWachtend(): number {
@@ -59,14 +52,12 @@ function aantalWachtend(): number {
 
 export default function App() {
   const [scherm, setScherm] = useState<Scherm>({ naam: 'pagina', p: 'overzicht' })
-  const [pagina, setPagina] = useState<Pagina>('overzicht')
+  const [paneel, setPaneel] = useState<InvulSoort | null>(null)
   const [nieuweNotitieOpen, setNieuweNotitieOpen] = useState(false)
   const naar = (p: Pagina) => {
-    setPagina(p)
     setScherm({ naam: 'pagina', p })
     window.scrollTo(0, 0)
   }
-  const terug = () => setScherm({ naam: 'pagina', p: pagina })
   const [notities, setNotities] = useState<Notitie[]>(() => opslag.notities())
   const [taken, setTaken] = useState<Taak[]>(() => opslag.taken())
   const [herstel, setHerstel] = useState<Record<string, HerstelType>>(() => opslag.herstel())
@@ -169,24 +160,13 @@ export default function App() {
     void synchroniseer()
   }
 
-  function herstelOpslaan(h: HerstelType) {
-    setHerstel(bewaarHerstel(h))
+  /** Uit het invulpaneel: wat je aanraakte in één keer bewaren en één keer syncen. */
+  function invulBewaren(w: { herstel?: HerstelType; gewicht?: GewichtType; schermtijd?: SchermtijdType }) {
+    if (w.herstel) setHerstel(bewaarHerstel(w.herstel))
+    if (w.gewicht) setGewicht(bewaarGewicht(w.gewicht))
+    if (w.schermtijd) setSchermtijd(bewaarSchermtijd(w.schermtijd))
     setWachtend(aantalWachtend())
-    terug()
-    void synchroniseer()
-  }
-
-  function schermtijdOpslaan(s: SchermtijdType) {
-    setSchermtijd(bewaarSchermtijd(s))
-    setWachtend(aantalWachtend())
-    terug()
-    void synchroniseer()
-  }
-
-  function gewichtOpslaan(g: GewichtType) {
-    setGewicht(bewaarGewicht(g))
-    setWachtend(aantalWachtend())
-    terug()
+    setPaneel(null)
     void synchroniseer()
   }
 
@@ -216,19 +196,10 @@ export default function App() {
     notities,
     geldWeek: opslag.geldWeek(),
   })
-  const invullen = (i: Invul) => setScherm({ naam: i })
+  const invullen = (i: InvulSoort) => setPaneel(i)
   const nieuweNotitie = () => { setNieuweNotitieOpen(true); naar('logboek') }
 
   const inhoud = (() => {
-    switch (scherm.naam) {
-      case 'herstel':
-        return <Herstel bestaand={herstel[vandaagISO()]} onOpslaan={herstelOpslaan} onTerug={terug} />
-      case 'schermtijd':
-        return <Schermtijd bestaand={schermtijd[gisterenISO()]} onOpslaan={schermtijdOpslaan} onTerug={terug} />
-      case 'gewicht':
-        return <Gewicht bestaand={gewicht[vandaagISO()]} alles={gewicht} onOpslaan={gewichtOpslaan} onTerug={terug} />
-    }
-
     switch (scherm.p) {
       case 'overzicht':
         return <Overzicht key={afgeleid} m={model} onNaar={naar} onInvul={invullen} onTaakAfvinken={taakAfvinken} />
@@ -279,13 +250,11 @@ export default function App() {
     }
   })()
 
-  // Oude schermen (eigen kop, telefoonbreedte) krijgen een smalle kolom binnen de schil.
-  const isOud = scherm.naam !== 'pagina'
   const openActies = model.rapportVanVandaag && model.rapport ? model.rapport.acties.length : 0
 
   return (
     <Schil
-      actief={scherm.naam === 'pagina' ? scherm.p : pagina}
+      actief={scherm.p}
       onNaar={naar}
       sync={status}
       bijgewerkt={model.brief ? model.brief.gegenereerd_op.slice(11, 16) : null}
@@ -295,7 +264,11 @@ export default function App() {
         mail: model.rapport?.mail ? { t: model.rapport.mail.concepten } : undefined,
       }}
     >
-      {isOud ? <div className="d-oud">{inhoud}</div> : inhoud}
+      {inhoud}
+      {paneel && (
+        <InvulPaneel soort={paneel} herstel={herstel} gewicht={gewicht} schermtijd={schermtijd}
+          onBewaar={invulBewaren} onDicht={() => setPaneel(null)} />
+      )}
     </Schil>
   )
 }
