@@ -9,6 +9,7 @@ import { TakenPagina } from './TakenPagina'
 import { TrendsPagina } from './TrendsPagina'
 import { ZaakPagina } from './ZaakPagina'
 import { OmzetPagina } from './OmzetPagina'
+import { MailPagina } from './MailPagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -154,26 +155,6 @@ function NietVers({ m }: { m: Model }) {
   return <p className="d-voetnoot" style={{ margin: '-12px 0 18px' }}>Rapport van {korteDag(m.rapport.datum)}: de ochtendroutine heeft vandaag nog niet gedraaid.</p>
 }
 
-function Mail({ m }: PaginaProps) {
-  const r = m.rapport
-  return (
-    <div className="d-pagina">
-      <Kop titel="Mail & Guestplan" sub={r?.mail ? `${r.mail.threads} threads · ${r.mail.nieuw} nieuw · ${r.mail.concepten} concepten klaar` : 'Nog geen mailrapport'} />
-      <NietVers m={m} />
-      {r?.mail && (<><H2>Inbox</H2><Lijst>{r.mail.regels.map((x, j) => <Rij key={j} l={x.wie} s={x.wat} w={x.concept ? 'Concept klaar' : 'Gemeld'} wc={x.concept ? 'd-goed' : ''} />)}</Lijst></>)}
-      <H2>In Guestplan gezet</H2>
-      {r?.guestplan?.length ? (
-        <Lijst>{r.guestplan.map((g, j) => (
-          <Rij key={j} l={g.naam} s={`${korteDag(g.datum)} · ${g.tijd} · ${g.aantal} p${g.tafel ? ` · tafel ${g.tafel}` : ''}${g.was ? ` · was ${g.was}` : ''}${g.opmerking ? ` · ${g.opmerking}` : ''}`} w={g.actie} wc={g.actie === 'nieuw' ? 'd-goed' : 'd-let'} />
-        ))}</Lijst>
-      ) : <Leeg>Niets ingevoerd.</Leeg>}
-      {!!r?.wachtOp?.length && (<><H2>Wacht nog op</H2><Lijst>{r.wachtOp.map((x) => <Rij key={x} l={x} />)}</Lijst></>)}
-      {!!r?.nietIngevoerd?.length && (<><H2>Niet ingevoerd</H2><Lijst>{r.nietIngevoerd.map((x) => <Rij key={x} l={x} />)}</Lijst></>)}
-      {!!r?.komend?.length && (<><H2>Komende groepen</H2><Lijst>{r.komend.map((k, j) => <Rij key={j} l={k.naam} s={`${korteDag(k.datum)}${k.noot ? ` · ${k.noot}` : ''}`} w={k.menu ? 'PDF klaar' : 'Menu volgt'} wc={k.menu ? 'd-goed' : 'd-let'} />)}</Lijst></>)}
-    </div>
-  )
-}
-
 function Meppie({ m }: PaginaProps) {
   const r = m.rapport
   return (
@@ -240,5 +221,5 @@ function Meer({ onNaar, m }: PaginaProps) {
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
   herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina, trends: TrendsPagina,
-  zaak: ZaakPagina, omzet: OmzetPagina, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
+  zaak: ZaakPagina, omzet: OmzetPagina, mail: MailPagina, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }

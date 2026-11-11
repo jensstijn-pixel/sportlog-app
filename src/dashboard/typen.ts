@@ -69,7 +69,7 @@ export interface Rapport {
   status?: { onderdeel: string; stand: 'gelukt' | 'deels' | 'niet'; reden?: string }[]
   vandaag?: string
   acties: RapportActie[]
-  mail?: { threads: number; nieuw: number; concepten: number; regels: { wie: string; wat: string; concept: boolean }[] }
+  mail?: { threads: number; nieuw: number; concepten: number; regels: { wie: string; wat: string; concept: boolean; soort?: string; urgent?: boolean }[] }
   guestplan?: { naam: string; datum: string; tijd: string; aantal: number; tafel?: string; actie: string; was?: string; opmerking?: string }[]
   wachtOp?: string[]
   nietIngevoerd?: string[]
@@ -81,4 +81,13 @@ export interface Rapport {
   aankomsten?: { tijd: string; gasten: number; tafels?: number }[]
   /** Guestplan-tellers van de komende dagen. */
   vooruit?: { datum: string; reserveringen: number; gasten: number; groepen?: { naam: string; aantal: number; tijd: string; menu: boolean }[] }[]
+  /** Komende groepen ≥ 12 met status (bregje-mail/groepen.json). */
+  groepen?: Groep[]
+  /** Wat de routine de laatste 14 dagen in Guestplan zette (reserveringen-log.md, zonder tel/mail). */
+  guestplanLog?: { op: string; naam: string; datum: string | null; datumTekst: string; tijd: string; aantal: string; wat: string }[]
+}
+
+export interface Groep {
+  naam: string; datum: string; tijd: string | null; aantal: number | null
+  status: string; menu: string; pdf: boolean; drank: string | null; bijzonder: string | null; open: string[]; bijgewerkt?: string
 }
