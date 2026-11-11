@@ -37,14 +37,6 @@ export default function Tracking({
     return d.toISOString().slice(0, 10)
   }, [periode])
 
-  const herstel = useMemo(
-    () => (dataset?.herstel ?? []).filter((h) => h.datum >= grens),
-    [dataset, grens],
-  )
-
-  const reeks = (sleutel: 'hrv' | 'slaap_min' | 'readiness' | 'rusthartslag'): Punt[] =>
-    herstel.map((h) => ({ datum: h.datum, waarde: (h as unknown as Record<string, number | null>)[sleutel] ?? null }))
-
   /** Uitgaven per week (ma–zo) uit het ABN-afschrift; de Mac rekent ze uit
    *  (tracking.py). Potjes, beleggen en zakelijk tellen niet mee. Per week en
    *  niet per dag: het afschrift komt één keer per week binnen. */
@@ -116,19 +108,8 @@ export default function Tracking({
         </Kaart>
       </div>
 
-      <Sectiekop className="mt-6">Herstel</Sectiekop>
-      <div className="mt-2.5 grid grid-cols-1 gap-2.5">
-        <Grafiek titel="HRV" punten={reeks('hrv')} eenheid="ms" trend />
-        <Grafiek
-          titel="Slaap"
-          punten={reeks('slaap_min')}
-          formatteer={(n) => `${Math.floor(n / 60)}u${String(Math.round(n % 60)).padStart(2, '0')}`}
-          trend
-        />
-        <Grafiek titel="Readiness" punten={reeks('readiness')} trend />
-        <Grafiek titel="Rusthartslag" punten={reeks('rusthartslag')} eenheid="bpm" hoogGoed={false} trend />
-      </div>
-      <p className="mt-2 text-[12px] text-vaag">dikke lijn = 7-daags gemiddelde</p>
+      {/* Herstel staat sinds 11 nov 2026 op de pagina Herstel van het dashboard (grafiek per dag,
+          met 7-daags gemiddelde). Hier blijft alleen de samenhang met je training. */}
 
       <Sectiekop className="mt-6">Geld</Sectiekop>
       <div className="mt-2.5 grid grid-cols-1 gap-2.5">

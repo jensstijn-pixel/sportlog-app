@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import type { Taak } from '../types'
 import { Balk, Pijl, Ring, Spark, Staven, VinkIcoon, Vinkje } from './teken'
-import { eur, komma, korteDag, uurMin, type Model } from './model'
+import { eur, komma, korteDag, perDag, uurMin, type Model } from './model'
 import type { Pagina } from './Schil'
 
 export type Invul = 'herstel' | 'gewicht' | 'schermtijd'
@@ -162,7 +162,7 @@ export function Overzicht({
         <Tegel maat="s" onNaar={onNaar} naar="herstel" i={i++}>
           <Kop kleur="var(--indigo)" naam="Slaap" rechts={h?.slaapScore != null ? `score ${h.slaapScore}` : undefined} />
           {slaap ? <div className="d-groot">{slaap.u}<small>u</small> {slaap.m}<small>m</small></div> : <p className="d-leeg">Nog niet ingevuld.</p>}
-          <Staven waarden={m.herstel.reeks.map((x) => x.slaapMinuten ?? 0)} h={30} kleur="var(--indigo)" />
+          <Staven waarden={perDag(m.herstel.alle, 14, (x) => x.slaapMinuten).map((p) => p.waarde)} h={30} kleur="var(--indigo)" />
         </Tegel>
 
         <Tegel maat="s" onNaar={onNaar} naar="lichaam" i={i++}>

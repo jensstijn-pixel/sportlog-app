@@ -159,3 +159,30 @@ button.d-w:active { transform: scale(.98); }
 .d-sets { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 16px 14px; }
 .d-sets span { font-size: 13px; padding: 4px 10px; border-radius: 99px; background: var(--fill); font-variant-numeric: tabular-nums; }
 .d-noten { padding: 0 16px 14px; margin: 0; list-style: none; font-size: 13px; color: var(--label2); display: flex; flex-direction: column; gap: 3px; }
+
+/* ── Herstel (11 nov 2026, ronde 1 per onderdeel) ── */
+.d-duiding { background: var(--card); border-radius: 16px; box-shadow: var(--schaduw); padding: 16px 18px 18px; }
+.d-duiding-kop { font-size: 13px; font-weight: 600; color: var(--orange); margin-bottom: 6px; }
+.d-duiding p { margin: 0; font-size: 18px; line-height: 1.45; letter-spacing: -.005em; }
+@media (max-width: 760px) { .d-duiding p { font-size: 17px; } }
+.d-signalen { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.d-signalen span { font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 99px; background: color-mix(in srgb, var(--orange) 15%, transparent); color: var(--orange); }
+.d-signalen span.rustig { background: color-mix(in srgb, var(--green) 15%, transparent); color: var(--green); }
+
+.d-seg { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px; padding: 2px; border-radius: 9px; background: var(--fill); }
+.d-seg button { height: 30px; border-radius: 7px; font-size: 13px; font-weight: 500; color: var(--label); padding: 0 10px; white-space: nowrap; }
+.d-seg button[aria-selected='true'] { background: var(--card); box-shadow: 0 1px 3px rgba(0, 0, 0, .12); font-weight: 600; }
+@media (prefers-color-scheme: dark) { .d-seg button[aria-selected='true'] { background: #636366; } }
+.d-seg.klein button { height: 26px; font-size: 12px; }
+.d-grafiek-voet { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 13px; color: var(--label2); flex-wrap: wrap; }
+
+.d-tg { position: relative; touch-action: pan-y; }
+.d-tg svg { display: block; overflow: visible; }
+.d-tg-as { font-size: 11px; fill: var(--label2); font-variant-numeric: tabular-nums; }
+.d-tg-tip { position: absolute; top: -6px; transform: translateX(-50%); background: var(--label); color: var(--card); font-size: 12px; padding: 3px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; }
+.d-tg-tip b { font-weight: 700; }
+.d-tg-leeg { padding: 40px 0; text-align: center; color: var(--label2); font-size: 14px; }
+/* De grijze waardekleur mag een status-kleur niet overrulen. */
+.d-rij .waarde.d-goed { color: var(--green); }
+.d-rij .waarde.d-let { color: var(--orange); }
+.d-rij .waarde.d-slecht { color: var(--red); }

@@ -62,6 +62,8 @@ export interface Model {
     hrvGem: number | null
     rhrGem: number | null
     reeks: Herstel[]
+    /** Alle metingen, oud → nieuw (voor de grafiek over 3 maanden). */
+    alle: Herstel[]
     duiding: string | null
     samenvatting: string | null
   }
@@ -172,6 +174,7 @@ export function bouwModel(p: {
       hrvGem: gem(eerder.map((h) => h.hrv).filter((x): x is number => x != null)),
       rhrGem: gem(eerder.map((h) => h.rusthartslag).filter((x): x is number => x != null)),
       reeks: herstelReeks.slice(-14),
+      alle: herstelReeks,
       duiding,
       samenvatting: ouraTekst?.split('\n').slice(0, 2).join(' · ') ?? null,
     },
@@ -201,4 +204,26 @@ export function bouwModel(p: {
     rapportVanVandaag: p.rapport?.datum === vandaag,
     brief: p.brief,
   }
+}
+
+/** Kalenderdagen t/m vandaag, met null waar niets is ingevuld. */
+export function perDag<T extends { datum: string }>(rijen: T[], dagen: number, waarde: (r: T) => number | null) {
+  const per = new Map(rijen.map((r) => [r.datum, r]))
+  const uit: { datum: string; waarde: number | null }[] = []
+  const d = new Date()
+  d.setHours(12, 0, 0, 0)
+  d.setDate(d.getDate() - (dagen - 1))
+  for (let i = 0; i < dagen; i++) {
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const r = per.get(iso)
+    uit.push({ datum: iso, waarde: r ? waarde(r) : null })
+    d.setDate(d.getDate() + 1)
+  }
+  return uit
+}
+
+/** Gemiddelde over de 14 dagen vóór vandaag, zoals de brief (oura.py) rekent. */
+export function gem14<T extends { datum: string }>(rijen: T[], waarde: (r: T) => number | null) {
+  const xs = perDag(rijen, 15, waarde).slice(0, 14).map((p) => p.waarde).filter((v): v is number => v != null)
+  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null
 }

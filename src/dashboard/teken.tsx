@@ -31,14 +31,15 @@ export function Spark({ waarden, h = 36, kleur = 'var(--blue)' }: { waarden: num
 }
 
 /** Staafjes; de laatste krijgt de volle kleur. */
-export function Staven({ waarden, h = 40, kleur = 'var(--blue)' }: { waarden: number[]; h?: number; kleur?: string }) {
+export function Staven({ waarden, h = 40, kleur = 'var(--blue)' }: { waarden: (number | null)[]; h?: number; kleur?: string }) {
   if (!waarden.length) return null
-  const hi = Math.max(...waarden) || 1
+  const hi = Math.max(...waarden.map((v) => v ?? 0)) || 1
   return (
     <div className="d-staven" style={{ height: h }} aria-hidden="true">
-      {waarden.map((v, i) => (
-        <i key={i} style={{ height: `${Math.max(6, (v / hi) * 100)}%`, background: kleur, opacity: i === waarden.length - 1 ? 1 : 0.28 }} />
-      ))}
+      {waarden.map((v, i) => (v == null
+        // Dag zonder meting: een stompje, zodat het gat zichtbaar blijft.
+        ? <i key={i} style={{ height: 3, background: 'var(--label3)', opacity: 0.6 }} />
+        : <i key={i} style={{ height: `${Math.max(6, (v / hi) * 100)}%`, background: kleur, opacity: i === waarden.length - 1 ? 1 : 0.28 }} />))}
     </div>
   )
 }

@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
-import type { Taak } from '../types'
+import type { Herstel, Taak } from '../types'
 import { Balk, Ic, Pijl, Spark, Staven, Vinkje } from './teken'
-import { eur, komma, korteDag, parseTraining, uurMin, type Model } from './model'
+import { eur, gem14, komma, korteDag, parseTraining, perDag, uurMin, type Model } from './model'
+import { TijdGrafiek } from './TijdGrafiek'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -41,27 +42,99 @@ export interface PaginaProps {
 }
 
 // ── Persoonlijk ──
-function Herstel({ m, onInvul }: PaginaProps) {
+type Metriek = 'hrv' | 'readiness' | 'slaap' | 'rhr'
+const METRIEK: Record<Metriek, { label: string; kleur: string; waarde: (h: Herstel) => number | null; fmt: (n: number) => string; soort?: 'staaf' }> = {
+  hrv: { label: 'HRV', kleur: 'var(--orange)', waarde: (h) => h.hrv, fmt: (n) => `${Math.round(n)} ms` },
+  readiness: { label: 'Readiness', kleur: 'var(--green)', waarde: (h) => h.readiness, fmt: (n) => `${Math.round(n)}` },
+  slaap: { label: 'Slaap', kleur: 'var(--indigo)', waarde: (h) => h.slaapMinuten, fmt: (n) => hm(n), soort: 'staaf' },
+  rhr: { label: 'Rusthartslag', kleur: 'var(--red)', waarde: (h) => h.rusthartslag, fmt: (n) => `${Math.round(n)} bpm` },
+}
+const SLAAPSCORE = [[85, 'uitstekend'], [75, 'goed'], [70, 'redelijk'], [60, 'matig'], [0, 'slecht']] as const
+
+/** Afwijking t.o.v. je gemiddelde, met de drempels van de brief (Daily-app oura.py). */
+function afwijking(k: 'hrv' | 'rhr' | 'slaap', v: number | null, g: number | null) {
+  if (v == null || g == null) return null
+  if (k === 'hrv') {
+    const pct = Math.round(((v - g) / g) * 100)
+    return { tekst: `${pct >= 0 ? '↑' : '↓'} ${Math.abs(pct)}%`, kleur: pct < -10 ? 'd-let' : pct > 10 ? 'd-goed' : '', signaal: pct < -10 ? `HRV ${Math.abs(pct)}% lager` : null }
+  }
+  if (k === 'rhr') {
+    const d = Math.round(v - g)
+    return { tekst: `${d >= 0 ? '↑' : '↓'} ${Math.abs(d)}`, kleur: d > 5 ? 'd-let' : d < -3 ? 'd-goed' : '', signaal: d > 5 ? `rusthartslag +${d}` : null }
+  }
+  const d = Math.round(v - g)
+  return { tekst: `${d >= 0 ? '↑' : '↓'} ${Math.abs(d)} min`, kleur: d < -60 ? 'd-let' : '', signaal: d < -60 ? `${Math.abs(d)} min korter geslapen` : null }
+}
+
+function HerstelPagina({ m, onInvul }: PaginaProps) {
+  const [metriek, setMetriek] = useState<Metriek>('hrv')
+  const [dagen, setDagen] = useState<14 | 90>(14)
   const h = m.herstel.vandaag
+  const alle = m.herstel.alle
+  const def = METRIEK[metriek]
+  const punten = perDag(alle, dagen, def.waarde)
+  const ingevuld = punten.filter((p) => p.waarde != null).length
+  const g = {
+    hrv: gem14(alle, (x) => x.hrv), rhr: gem14(alle, (x) => x.rusthartslag), slaap: gem14(alle, (x) => x.slaapMinuten),
+    readiness: gem14(alle, (x) => x.readiness),
+  }
+  const gemMetriek = metriek === 'rhr' ? g.rhr : g[metriek]
+  const af = { hrv: afwijking('hrv', h?.hrv ?? null, g.hrv), rhr: afwijking('rhr', h?.rusthartslag ?? null, g.rhr), slaap: afwijking('slaap', h?.slaapMinuten ?? null, g.slaap) }
+  const signalen = [
+    af.hrv?.signaal, af.rhr?.signaal, af.slaap?.signaal,
+    h?.readiness != null && h.readiness < 70 ? `readiness ${h.readiness}` : null,
+    h?.tempAfwijking != null && h.tempAfwijking > 0.5 ? `temperatuur +${komma(h.tempAfwijking)}°` : null,
+  ].filter((x): x is string => !!x)
+  const band = h?.slaapScore != null ? SLAAPSCORE.find(([grens]) => h.slaapScore! >= grens)?.[1] : null
+  const vandaagWaarde = h ? def.waarde(h) : null
+
   return (
     <div className="d-pagina smal">
-      <Kop titel="Herstel" sub={h ? 'Vannacht, overgenomen uit Oura' : 'Nog niets ingevuld voor vannacht'} />
-      <div className="d-lijst d-grafiek">
-        <div className="kop"><b className="d-num">{h?.hrv ?? '–'}<small>ms HRV</small></b><span>{m.herstel.hrvGem != null ? `gem. ${komma(m.herstel.hrvGem)}` : ''}</span></div>
-        <Spark waarden={m.herstel.reeks.map((x) => x.hrv ?? 0)} h={90} kleur="var(--orange)" />
+      <Kop titel="Herstel" sub={h ? `Vannacht · ingevuld om ${h.bijgewerkt?.slice(11, 16) ?? '?'}` : 'Nog niets ingevuld voor vannacht'} />
+
+      {(m.herstel.duiding || signalen.length > 0) && (
+        <section className="d-duiding">
+          <div className="d-duiding-kop">Wat zegt het</div>
+          {m.herstel.duiding && <p>{m.herstel.duiding}</p>}
+          {signalen.length > 0 ? (
+            <div className="d-signalen">{signalen.map((x) => <span key={x}>{x}</span>)}</div>
+          ) : h ? <div className="d-signalen"><span className="rustig">geen afwijkingen</span></div> : null}
+        </section>
+      )}
+
+      <div className="d-lijst d-grafiek" style={{ marginTop: 20 }}>
+        <div className="d-seg" role="tablist" aria-label="Wat je ziet">
+          {(Object.keys(METRIEK) as Metriek[]).map((k) => (
+            <button key={k} type="button" role="tab" aria-selected={metriek === k} onClick={() => setMetriek(k)}>{METRIEK[k].label}</button>
+          ))}
+        </div>
+        <div className="kop" style={{ marginTop: 14 }}>
+          <b className="d-num" style={{ color: def.kleur }}>{vandaagWaarde != null ? def.fmt(vandaagWaarde) : '–'}<small>vannacht</small></b>
+          <span>{gemMetriek != null ? `gem. 14 dagen ${def.fmt(gemMetriek)}` : ''}</span>
+        </div>
+        <TijdGrafiek punten={punten} kleur={def.kleur} gem={gemMetriek} formatteer={def.fmt} soort={def.soort} />
+        <div className="d-grafiek-voet">
+          <span>{ingevuld} van {dagen} dagen ingevuld</span>
+          <div className="d-seg klein" role="tablist" aria-label="Periode">
+            <button type="button" role="tab" aria-selected={dagen === 14} onClick={() => setDagen(14)}>2 weken</button>
+            <button type="button" role="tab" aria-selected={dagen === 90} onClick={() => setDagen(90)}>3 maanden</button>
+          </div>
+        </div>
       </div>
-      {m.herstel.duiding && <p className="d-voetnoot">{m.herstel.duiding}</p>}
+      <p className="d-voetnoot">Gestippeld = je gemiddelde van de 14 dagen ervoor (zelfde maatstaf als de brief).{def.soort ? '' : ' Brede lijn = 7-daags gemiddelde.'} Tik of beweeg over de grafiek voor een dag.</p>
+
       <H2>Vannacht</H2>
       {h ? (
         <Lijst>
-          <Rij l="Readiness" w={h.readiness ?? '–'} />
-          <Rij l="Slaap" w={h.slaapMinuten != null ? hm(h.slaapMinuten) : '–'} />
-          <Rij l="Slaapscore" w={h.slaapScore ?? '–'} />
-          <Rij l="HRV" w={h.hrv != null ? `${h.hrv} ms` : '–'} />
-          <Rij l="Rusthartslag" w={h.rusthartslag != null ? `${h.rusthartslag} bpm` : '–'} s={m.herstel.rhrGem != null ? `gemiddeld ${komma(m.herstel.rhrGem)}` : undefined} />
-          <Rij l="Temperatuur" w={h.tempAfwijking != null ? `${h.tempAfwijking > 0 ? '+' : ''}${komma(h.tempAfwijking)}°` : '–'} />
+          <Rij l="Readiness" s={g.readiness != null ? `gem. ${Math.round(g.readiness)}` : undefined} w={h.readiness ?? '–'} wc={h.readiness != null && h.readiness < 70 ? 'd-let' : ''} />
+          <Rij l="Slaap" s={g.slaap != null ? `gem. ${hm(g.slaap)}${af.slaap ? ` · ${af.slaap.tekst}` : ''}` : undefined} w={h.slaapMinuten != null ? hm(h.slaapMinuten) : '–'} wc={af.slaap?.kleur} />
+          <Rij l="Slaapscore" s={band ?? undefined} w={h.slaapScore ?? '–'} />
+          <Rij l="HRV" s={g.hrv != null ? `gem. ${komma(g.hrv)}${af.hrv ? ` · ${af.hrv.tekst}` : ''}` : undefined} w={h.hrv != null ? `${h.hrv} ms` : '–'} wc={af.hrv?.kleur} />
+          <Rij l="Rusthartslag" s={g.rhr != null ? `gem. ${komma(g.rhr)}${af.rhr ? ` · ${af.rhr.tekst}` : ''}` : undefined} w={h.rusthartslag != null ? `${h.rusthartslag} bpm` : '–'} wc={af.rhr?.kleur} />
+          <Rij l="Temperatuur" s="afwijking van normaal" w={h.tempAfwijking != null ? `${h.tempAfwijking > 0 ? '+' : ''}${komma(h.tempAfwijking)}°` : '–'} wc={h.tempAfwijking != null && h.tempAfwijking > 0.5 ? 'd-slecht' : ''} />
         </Lijst>
       ) : <Leeg>Neem de cijfers over uit de Oura-app.</Leeg>}
+      <p className="d-voetnoot">Oranje = de brief noemt het een signaal: HRV meer dan 10% lager, rusthartslag meer dan 5 hoger, meer dan een uur korter geslapen, readiness onder 70. Rood = temperatuur meer dan 0,5° hoger.</p>
       <div className="d-knoppen"><button type="button" className="d-knop" onClick={() => onInvul('herstel')}>{h ? 'Cijfers aanpassen' : 'Cijfers invullen'}</button></div>
     </div>
   )
@@ -322,6 +395,6 @@ function Meer({ onNaar, m }: PaginaProps) {
 }
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
-  herstel: Herstel, training: Training, lichaam: Lichaam, taken: Taken,
+  herstel: HerstelPagina, training: Training, lichaam: Lichaam, taken: Taken,
   zaak: Zaak, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }
