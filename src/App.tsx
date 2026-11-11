@@ -165,6 +165,12 @@ export default function App() {
     void synchroniseer()
   }
 
+  function taakBewaren(taak: Taak) {
+    setTaken(bewaarTaak(taak))
+    setWachtend(aantalWachtend())
+    void synchroniseer()
+  }
+
   function herstelOpslaan(h: HerstelType) {
     setHerstel(bewaarHerstel(h))
     setWachtend(aantalWachtend())
@@ -265,14 +271,10 @@ export default function App() {
             key={afgeleid}
             notities={notities}
             status={status}
-            taken={taken}
-            verrijking={opslag.verrijking()}
             herstel={herstel}
             schermtijd={schermtijd}
             onNieuweNotitie={(datum) => setScherm({ naam: 'editor', datum })}
             onOpenNotitie={(n) => setScherm({ naam: 'detail', id: n.id })}
-            onTaakToevoegen={taakToevoegen}
-            onTaakAfvinken={taakAfvinken}
             onInzicht={() => setScherm({ naam: 'inzicht' })}
             onTab={() => {}}
           />
@@ -306,7 +308,7 @@ export default function App() {
         const P = PAGINAS[scherm.p]
         return P ? (
           <P key={afgeleid} m={model} onNaar={naar} onInvul={invullen} onTaakAfvinken={taakAfvinken}
-            onTaakToevoegen={taakToevoegen} onNotitie={nieuweNotitie} />
+            onTaakToevoegen={taakToevoegen} onTaakBewaar={taakBewaren} onNotitie={nieuweNotitie} />
         ) : null
       }
     }

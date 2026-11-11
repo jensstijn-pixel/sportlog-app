@@ -1,17 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Notitie, Schermtijd, Herstel, Taak, Verrijking } from '../types'
+import type { Notitie, Schermtijd, Herstel } from '../types'
 import { TYPE_LABELS } from '../types'
 import { korteDatum, parseISO, vandaagISO, weekDagen } from '../lib/datum'
 import {
   AccentKnop,
   Chip,
   Kaart,
-  KaartKnop,
   Leeg,
   PaginaKop,
   Sectiekop,
   TabBalk,
-  Vinkje,
 } from '../onderdelen/ui'
 
 /** Alles vastleggen, met de dag als kapstok.
@@ -52,28 +50,20 @@ function bouwWeken(vandaag: string): string[][] {
 export default function Logboek({
   notities,
   status,
-  taken,
-  verrijking,
   herstel,
   schermtijd,
   onNieuweNotitie,
   onOpenNotitie,
-  onTaakToevoegen,
-  onTaakAfvinken,
   onInzicht,
   onTab,
 }: {
   notities: Notitie[]
   /** Kort woord over de koppeling; komt in de subtitel te staan. */
   status: string
-  taken: Taak[]
-  verrijking: Record<string, Verrijking>
   herstel: Record<string, Herstel>
   schermtijd: Record<string, Schermtijd>
   onNieuweNotitie: (datum: string) => void
   onOpenNotitie: (n: Notitie) => void
-  onTaakToevoegen: (tekst: string) => void
-  onTaakAfvinken: (taak: Taak, klaar: boolean) => void
   onInzicht: () => void
   onTab: (tab: 'vandaag' | 'tracking') => void
 }) {
@@ -94,29 +84,6 @@ export default function Logboek({
   }
 
   const notitie = notities.find((n) => n.datum === gekozen)
-  const openTaken = useMemo(
-    () =>
-      taken
-        .filter((t) => !t.klaar)
-        .sort((a, b) => {
-          const va = verrijking[a.id]
-          const vb = verrijking[b.id]
-          if (!va && vb) return -1
-          if (va && !vb) return 1
-          if (va && vb && va.prioriteit !== vb.prioriteit) return va.prioriteit - vb.prioriteit
-          return a.gemaakt < b.gemaakt ? 1 : -1
-        }),
-    [taken, verrijking],
-  )
-
-  // Taak invoeren
-  const [taakTekst, setTaakTekst] = useState('')
-  function bewaarTaak() {
-    const schoon = taakTekst.trim()
-    if (!schoon) return
-    onTaakToevoegen(schoon)
-    setTaakTekst('')
-  }
 
   const gekozenLabel = gekozen === vandaag ? `Vandaag · ${korteDatum(gekozen)}` : korteDatum(gekozen)
 
@@ -267,62 +234,7 @@ export default function Logboek({
           </>
         )}
 
-        {/* To-do staat los van de kalender: zie de toelichting bovenaan. */}
-        <Sectiekop className="mt-8">
-          To-do{openTaken.length ? ` · ${openTaken.length} open` : ''}
-        </Sectiekop>
-        <Kaart className="mt-2.5 p-4">
-          <textarea
-            rows={2}
-            placeholder="Wat schiet je te binnen?"
-            value={taakTekst}
-            onChange={(e) => setTaakTekst(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                bewaarTaak()
-              }
-            }}
-            className="w-full resize-none text-[16px] leading-[1.4]"
-          />
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <span className="text-[12px] text-vaag">
-              Onbewerkt is prima — ik sorteer het 's ochtends.
-            </span>
-            <KaartKnop onClick={bewaarTaak} uit={!taakTekst.trim()}>
-              Zet erbij
-            </KaartKnop>
-          </div>
-        </Kaart>
-
-        {openTaken.length > 0 && (
-          <div className="mt-2.5 grid grid-cols-1 gap-2.5">
-            {openTaken.map((t) => {
-              const v = verrijking[t.id]
-              return (
-                <Kaart key={t.id} className="flex items-start gap-3 px-4 py-3.5">
-                  <Vinkje
-                    aan={false}
-                    onClick={() => onTaakAfvinken(t, true)}
-                    label={`Vink af: ${t.tekst}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[16px] font-semibold leading-[1.3]">{t.tekst}</p>
-                    <div className="mt-[7px] flex flex-wrap items-center gap-2">
-                      <Chip klein>{v ? v.categorie : 'Inbox'}</Chip>
-                      <span className="text-[12px] text-mut">
-                        {v?.gepland ? korteDatum(v.gepland) : 'Sorteren'}
-                      </span>
-                    </div>
-                    {v?.toelichting && (
-                      <p className="mt-[7px] truncate text-[13px] text-notitie">✦ {v.toelichting}</p>
-                    )}
-                  </div>
-                </Kaart>
-              )
-            })}
-          </div>
-        )}
+        {/* To-do staat sinds 11 nov 2026 alleen op de pagina Taken van het dashboard. */}
       </div>
 
       <TabBalk actief="logboek" onKies={(t) => t !== 'logboek' && onTab(t)} />

@@ -80,7 +80,9 @@ export interface Model {
   taken: {
     gekozen: { taak: Taak; v?: Verrijking; ligt: number }[]
     overig: { taak: Taak; v?: Verrijking }[]
+    afgerond: Taak[]
     cat: (t: Taak) => string
+    prio: (t: Taak) => 1 | 2 | 3 | null
   }
   opWerk: string[]
   voorspel: string | null
@@ -140,13 +142,20 @@ export function bouwModel(p: {
   const netto = stLijst.map((s) => nettoSchermtijd(s)).filter((n): n is number => n != null)
   const stGisteren = p.schermtijd[gisteren]
 
-  // Taken
-  const open = p.taken.filter((t) => !t.klaar)
+  // Taken. Eigen keuzes van Jens (gepland, later, prioriteit) winnen van de verrijking.
+  const zichtbaar = p.taken.filter((t) => !t.verwijderd)
+  const open = zichtbaar.filter((t) => !t.klaar)
+  const gepland = (t: Taak) => t.gepland ?? p.verrijking[t.id]?.gepland ?? null
   const gekozen = open
-    .filter((t) => p.verrijking[t.id]?.gepland && p.verrijking[t.id].gepland! <= vandaag)
-    .map((t) => ({ taak: t, v: p.verrijking[t.id], ligt: dagenTussen(p.verrijking[t.id].gepland!, vandaag) }))
-    .sort((a, b) => (a.v?.prioriteit ?? 3) - (b.v?.prioriteit ?? 3) || b.ligt - a.ligt)
+    .filter((t) => !t.later && gepland(t) && gepland(t)! <= vandaag)
+    .map((t) => ({ taak: t, v: p.verrijking[t.id], ligt: dagenTussen(gepland(t)!, vandaag) }))
+    .sort((a, b) => (a.taak.prioriteit ?? a.v?.prioriteit ?? 3) - (b.taak.prioriteit ?? b.v?.prioriteit ?? 3) || b.ligt - a.ligt)
   const overig = open.filter((t) => !gekozen.some((g) => g.taak.id === t.id)).map((t) => ({ taak: t, v: p.verrijking[t.id] }))
+  const weekTerug = new Date(`${vandaag}T12:00:00`)
+  weekTerug.setDate(weekTerug.getDate() - 7)
+  const afgerond = zichtbaar
+    .filter((t) => t.klaar && (t.klaarOp ?? t.bijgewerkt) >= weekTerug.toISOString())
+    .sort((a, b) => (b.klaarOp ?? '').localeCompare(a.klaarOp ?? ''))
 
   // Geld (uit het ABN-afschrift, per week, in centen)
   const weken = (p.dataset?.geld_weken ?? []).map((w) => ({ datum: w.datum, uit: w.uit / 100, in: w.in / 100 }))
@@ -207,7 +216,11 @@ export function bouwModel(p: {
       signalen: p.brief?.trainingSignalen ?? [],
     },
     dataset: p.dataset,
-    taken: { gekozen, overig, cat: (t) => (p.verrijking[t.id] ? CATEGORIE_LABELS[p.verrijking[t.id].categorie] : 'Nieuw') },
+    taken: {
+      gekozen, overig, afgerond,
+      cat: (t) => (p.verrijking[t.id] ? CATEGORIE_LABELS[p.verrijking[t.id].categorie] : 'Nieuw'),
+      prio: (t) => t.prioriteit ?? p.verrijking[t.id]?.prioriteit ?? null,
+    },
     opWerk: (sectie(brief, 'voeding') ?? '').split('\n').filter((r) => r.startsWith('☐')).map((r) => r.replace(/^☐\s*/, '')),
     voorspel: sectie(brief, 'voorspel')?.split('\n')[0] ?? null,
     geld: { weken, laatste, gem: gemUit, tekst: sectie(brief, 'financien'), uren: sectie(brief, 'uren') },
@@ -287,4 +300,18 @@ export function schermtijdPerWeek(alles: Record<string, Schermtijd>, weken: numb
     uit.push({ maandag: maIso, gem: xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null, dagen: xs.length })
   }
   return uit
+}
+
+/** "Met Niels (vr): 1) … 2) …" → titel + punten. Null als er minder dan twee genummerde punten zijn. */
+export function splitsPunten(tekst: string): { titel: string; punten: string[] } | null {
+  const delen = tekst.split(/\s*(?:^|\s)\d{1,2}\)\s+/)
+  if (delen.length < 3) return null
+  return { titel: delen[0].replace(/:\s*$/, '').trim(), punten: delen.slice(1).map((x) => x.trim()).filter(Boolean) }
+}
+
+/** Subtaken van een taak: opgeslagen, of afgeleid uit de tekst (nog niets afgevinkt). */
+export function subtakenVan(t: Taak) {
+  if (t.subtaken?.length) return { titel: splitsPunten(t.tekst)?.titel ?? t.tekst, punten: t.subtaken }
+  const s = splitsPunten(t.tekst)
+  return s ? { titel: s.titel, punten: s.punten.map((x) => ({ tekst: x, klaar: false })) } : null
 }

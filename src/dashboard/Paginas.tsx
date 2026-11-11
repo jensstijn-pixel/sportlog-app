@@ -5,6 +5,7 @@ import { eur, gem14, komma, korteDag, perDag, uurMin, type Model } from './model
 import { TijdGrafiek } from './TijdGrafiek'
 import { TrainingPagina } from './TrainingPagina'
 import { GewichtPagina, SchermtijdPagina } from './LichaamPaginas'
+import { TakenPagina } from './TakenPagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -40,6 +41,8 @@ export interface PaginaProps {
   onInvul: (i: Invul) => void
   onTaakAfvinken: (t: Taak, klaar: boolean) => void
   onTaakToevoegen: (tekst: string) => void
+  /** Hele taak opslaan (bewerken, plannen, subtaken, verwijderen). */
+  onTaakBewaar: (t: Taak) => void
   onNotitie: () => void
 }
 
@@ -138,36 +141,6 @@ function HerstelPagina({ m, onInvul }: PaginaProps) {
       ) : <Leeg>Neem de cijfers over uit de Oura-app.</Leeg>}
       <p className="d-voetnoot">Oranje = de brief noemt het een signaal: HRV meer dan 10% lager, rusthartslag meer dan 5 hoger, meer dan een uur korter geslapen, readiness onder 70. Rood = temperatuur meer dan 0,5° hoger.</p>
       <div className="d-knoppen"><button type="button" className="d-knop" onClick={() => onInvul('herstel')}>{h ? 'Cijfers aanpassen' : 'Cijfers invullen'}</button></div>
-    </div>
-  )
-}
-
-function Taken({ m, onTaakAfvinken, onTaakToevoegen }: PaginaProps) {
-  const [nieuw, setNieuw] = useState('')
-  const voegToe = () => { const t = nieuw.trim(); if (t) { onTaakToevoegen(t); setNieuw('') } }
-  return (
-    <div className="d-pagina smal">
-      <Kop titel="Taken" sub="Ik kies er elke ochtend 1 tot 3 voor vandaag" />
-      <Lijst>
-        <div className="d-rij">
-          <input className="d-invoer" id="nieuwe-taak" value={nieuw} placeholder="Wat schiet je te binnen?" onChange={(e) => setNieuw(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && voegToe()} />
-          {nieuw.trim() && <button type="button" className="d-knop" style={{ height: 32 }} onClick={voegToe}>Voeg toe</button>}
-        </div>
-      </Lijst>
-      <H2>Voor vandaag</H2>
-      {m.taken.gekozen.length ? (
-        <Lijst>{m.taken.gekozen.map(({ taak, v, ligt }) => (
-          <Rij key={taak.id} vink={() => onTaakAfvinken(taak, !taak.klaar)} klaar={taak.klaar} l={taak.tekst}
-            s={[m.taken.cat(taak), v?.toelichting].filter(Boolean).join(' · ')} w={ligt > 0 ? `${ligt} d` : undefined} wc={ligt >= 5 ? 'd-slecht' : ligt >= 2 ? 'd-let' : ''} />
-        ))}</Lijst>
-      ) : <Leeg>Niets gepland voor vandaag.</Leeg>}
-      <H2>Verder open</H2>
-      {m.taken.overig.length ? (
-        <Lijst>{m.taken.overig.map(({ taak, v }) => (
-          <Rij key={taak.id} vink={() => onTaakAfvinken(taak, !taak.klaar)} klaar={taak.klaar} l={taak.tekst} s={[m.taken.cat(taak), v?.toelichting].filter(Boolean).join(' · ')} />
-        ))}</Lijst>
-      ) : <Leeg>Niets anders open.</Leeg>}
-      {!!m.opWerk.length && (<><H2>Op werk checken</H2><Lijst>{m.opWerk.map((w) => <Rij key={w} l={w} />)}</Lijst><p className="d-voetnoot">Een foto van het etiket is genoeg.</p></>)}
     </div>
   )
 }
@@ -336,6 +309,6 @@ function Meer({ onNaar, m }: PaginaProps) {
 }
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
-  herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: Taken,
+  herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina,
   zaak: Zaak, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }

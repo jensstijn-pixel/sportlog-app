@@ -215,6 +215,17 @@ export interface Taak {
   /** ISO 8601, moment van afvinken */
   klaarOp?: string
   bijgewerkt: string
+  // Sinds 11 nov 2026: keuzes van Jens zelf. Die winnen van de verrijking van de Mac.
+  /** JJJJ-MM-DD: "vandaag doen" (zelf gepland). */
+  gepland?: string | null
+  /** Niet kiezen voor een dag, tot Jens het terugzet. */
+  later?: boolean
+  /** Eigen prioriteit (1 = eerst). */
+  prioriteit?: 1 | 2 | 3 | null
+  /** Punten binnen de taak, afvinkbaar. Ontstaat uit "1) … 2) …" in de tekst. */
+  subtaken?: { tekst: string; klaar: boolean }[]
+  /** Verwijderd in de app; de Mac ruimt het bestand op. */
+  verwijderd?: boolean
 }
 
 /** Wat de Mac van een taak maakte (taken/verrijking.json, per taak-id). */

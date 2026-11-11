@@ -207,3 +207,35 @@ button.d-w:active { transform: scale(.98); }
 .d-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 2px 7px; border-radius: 6px; margin-right: 8px; background: color-mix(in srgb, var(--orange) 16%, transparent); color: var(--orange); vertical-align: 1px; }
 .d-badge.rood { background: color-mix(in srgb, var(--red) 14%, transparent); color: var(--red); }
 button.d-rij:disabled { opacity: .5; cursor: default; }
+
+/* ── Taken (11 nov 2026) ── */
+.d-taak { position: relative; }
+.d-taak + .d-taak::before { content: ''; position: absolute; top: 0; right: 0; left: 50px; border-top: .5px solid var(--sep); z-index: 1; }
+.d-taak .d-rij::before { display: none; }
+.d-taak-tekst { text-align: left; color: var(--label); font-size: 15px; }
+.d-taak-tekst .d-vink-tekst { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.d-uitklap { flex: none; width: 32px; height: 32px; display: grid; place-items: center; color: var(--label3); border-radius: 8px; }
+.d-uitklap svg { transform: rotate(90deg); transition: transform 200ms var(--uit); }
+.d-uitklap[aria-expanded='true'] svg { transform: rotate(-90deg); }
+.d-punten { list-style: none; margin: 0; padding: 0 16px 10px 50px; display: flex; flex-direction: column; gap: 2px; }
+.d-punten li { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; font-size: 14px; line-height: 1.35; }
+.d-punten .d-vinkje { width: 19px; height: 19px; }
+
+.d-sheet { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 20px; }
+.d-sheet-waas { position: absolute; inset: 0; background: rgba(0, 0, 0, .32); }
+.d-sheet-paneel { position: relative; width: min(540px, 100%); max-height: 88dvh; overflow: auto; background: var(--card); border-radius: 22px; padding: 22px; box-shadow: 0 20px 60px rgba(0, 0, 0, .25); }
+@media (max-width: 760px) {
+  .d-sheet { place-items: end stretch; padding: 0; }
+  .d-sheet-paneel { width: 100%; border-radius: 22px 22px 0 0; padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .d-sheet-waas { animation: d-waas 200ms ease-out both; }
+  .d-sheet-paneel { animation: d-paneel 260ms var(--uit) both; }
+  @keyframes d-waas { from { opacity: 0; } }
+  @keyframes d-paneel { from { opacity: 0; transform: translateY(18px) scale(.985); } }
+}
+.d-sheet-titel { font-size: 22px; font-weight: 700; margin: 0; }
+.d-tekstvak { width: 100%; border: 0; border-radius: 12px; background: var(--card2); color: var(--label); padding: 12px 14px; font: inherit; font-size: 15px; line-height: 1.45; resize: vertical; }
+.d-tekstvak:focus { outline: 2px solid var(--blue); }
+.d-veld { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; font-size: 13px; color: var(--label2); }
+.d-knop:disabled { opacity: .5; }

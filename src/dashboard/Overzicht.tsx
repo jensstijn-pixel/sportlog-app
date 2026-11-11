@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import type { Taak } from '../types'
 import { Balk, Pijl, Ring, Spark, Staven, VinkIcoon, Vinkje } from './teken'
-import { MAX_SCHERMTIJD, cutTempo, eur, komma, korteDag, perDag, uurMin, type Model } from './model'
+import { MAX_SCHERMTIJD, cutTempo, eur, komma, korteDag, perDag, subtakenVan, uurMin, type Model } from './model'
+import { useOpWerkKlaar } from './TakenPagina'
 import type { Pagina } from './Schil'
 
 export type Invul = 'herstel' | 'gewicht' | 'schermtijd'
@@ -50,6 +51,7 @@ export function Overzicht({
 }) {
   const r = m.rapport
   const acties = useActiesKlaar(r?.datum)
+  const opWerk = useOpWerkKlaar(m.vandaag)
   const h = m.herstel.vandaag
   const bg = m.bregje?.gisteren
   const bv = m.bregje?.vandaag
@@ -114,8 +116,11 @@ export function Overzicht({
                 <li key={taak.id}>
                   <Vinkje aan={taak.klaar} onClick={() => onTaakAfvinken(taak, !taak.klaar)} label={`Afvinken: ${taak.tekst}`} />
                   <span className="d-vink-tekst" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {taak.tekst}
-                    <span className="meta">{m.taken.cat(taak)}{ligt > 0 ? ` · ligt al ${ligt} ${ligt === 1 ? 'dag' : 'dagen'}` : ''}</span>
+                    {subtakenVan(taak)?.titel ?? taak.tekst}
+                    <span className="meta">
+                      {(() => { const st = subtakenVan(taak); return st ? `${st.punten.filter((x) => x.klaar).length} van ${st.punten.length} punten · ` : '' })()}
+                      {taak.gepland === m.vandaag ? 'zelf gepland' : m.taken.cat(taak)}{ligt > 0 ? ` · ligt al ${ligt} ${ligt === 1 ? 'dag' : 'dagen'}` : ''}
+                    </span>
                   </span>
                 </li>
               ))}
@@ -125,10 +130,15 @@ export function Overzicht({
           )}
         </Tegel>
 
-        <Tegel maat="s" onNaar={onNaar} naar="taken" i={i++}>
-          <Kop kleur="var(--yellow)" naam="Op werk checken" rechts={String(m.opWerk.length)} pijl />
+        <Tegel maat="s" onNaar={onNaar} i={i++}>
+          <Kop kleur="var(--yellow)" naam="Op werk checken" rechts={`${m.opWerk.length - opWerk.klaar.filter((x) => m.opWerk.includes(x)).length} open`} />
           {m.opWerk.length ? (
-            <ul className="d-wlijst">{m.opWerk.map((w, j) => <li key={j} style={{ fontSize: 13 }}>{w.split(':')[0]}</li>)}</ul>
+            <ul className="d-wlijst">{m.opWerk.map((w) => (
+              <li key={w} style={{ fontSize: 13 }} data-klaar={opWerk.klaar.includes(w) || undefined}>
+                <Vinkje aan={opWerk.klaar.includes(w)} onClick={() => opWerk.wissel(w)} label={`Afvinken: ${w}`} />
+                <span className="d-vink-tekst">{w.split(':')[0]}</span>
+              </li>
+            ))}</ul>
           ) : <p className="d-leeg">Niets te checken.</p>}
         </Tegel>
 
