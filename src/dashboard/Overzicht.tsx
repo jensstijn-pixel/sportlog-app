@@ -217,8 +217,21 @@ export function Overzicht({
           )}
         </Tegel>
 
-        <Tegel maat="m" onNaar={onNaar} naar="brief" i={i++}>
-          <Kop kleur="var(--orange)" naam="Ochtendbrief" rechts={m.brief ? korteDag(m.brief.datum) : undefined} pijl />
+        <Tegel maat="m" onNaar={onNaar} i={i++}>
+          <Kop kleur="var(--orange)" naam="Je ochtend" rechts={m.brief ? `brief ${m.brief.gegenereerd_op.slice(11, 16)}` : undefined} />
+          {r?.status && m.rapportVanVandaag && (
+            <>
+              <div className="d-statussen" style={{ marginTop: 8 }}>
+                {r.status.map((s) => {
+                  const kleur = s.stand === 'gelukt' ? 'var(--green)' : s.stand === 'deels' ? 'var(--orange)' : 'var(--red)'
+                  return <span key={s.onderdeel} className="d-status" style={{ color: kleur, background: `color-mix(in srgb, ${kleur} 13%, transparent)` }}>{s.onderdeel} {s.stand === 'gelukt' ? '✓' : s.stand}</span>
+                })}
+              </div>
+              {r.status.filter((s) => s.stand !== 'gelukt' && s.reden).map((s) => (
+                <div key={s.onderdeel} className="d-leeg d-let" style={{ paddingTop: 6 }}>{s.onderdeel}: {s.reden}</div>
+              ))}
+            </>
+          )}
           {m.rapport?.vandaag && m.rapportVanVandaag ? (
             <p style={{ fontSize: 14, lineHeight: 1.45, margin: '8px 0 0' }}>{m.rapport.vandaag}</p>
           ) : m.herstel.duiding ? (

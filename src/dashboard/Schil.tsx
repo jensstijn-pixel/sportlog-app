@@ -4,7 +4,7 @@ import './dashboard.css'
 
 export type Pagina =
   | 'overzicht' | 'herstel' | 'training' | 'gewicht' | 'schermtijd' | 'taken' | 'logboek' | 'trends'
-  | 'zaak' | 'omzet' | 'mail' | 'meppie' | 'geld' | 'brief' | 'meer' | 'instellingen'
+  | 'zaak' | 'omzet' | 'mail' | 'meppie' | 'geld' | 'meer' | 'instellingen'
 
 export const NAV: { p: Pagina; naam: string; g: GlyphNaam; kleur: string; groep: string | null }[] = [
   { p: 'overzicht', naam: 'Overzicht', g: 'overzicht', kleur: 'var(--blue)', groep: null },
@@ -20,7 +20,6 @@ export const NAV: { p: Pagina; naam: string; g: GlyphNaam; kleur: string; groep:
   { p: 'mail', naam: 'Mail & Guestplan', g: 'mail', kleur: 'var(--pink)', groep: 'Bregje' },
   { p: 'meppie', naam: 'Meppie', g: 'spons', kleur: 'var(--mint)', groep: 'Bregje' },
   { p: 'geld', naam: 'Geld & uren', g: 'euro', kleur: 'var(--green)', groep: 'Week' },
-  { p: 'brief', naam: 'Ochtendbrief', g: 'zon', kleur: 'var(--orange)', groep: 'Week' },
 ]
 
 const TABS: { p: Pagina; naam: string; g: GlyphNaam }[] = [

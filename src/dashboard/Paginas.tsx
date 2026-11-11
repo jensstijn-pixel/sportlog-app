@@ -2,7 +2,7 @@ import { useState, type ReactNode } from 'react'
 import type { Herstel, Taak } from '../types'
 import type { MeppieMelding } from './typen'
 import { Ic, Pijl, Vinkje } from './teken'
-import { gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
+import { gem14, komma, perDag, uurMin, type Model } from './model'
 import { TijdGrafiek } from './TijdGrafiek'
 import { TrainingPagina } from './TrainingPagina'
 import { GewichtPagina, SchermtijdPagina } from './LichaamPaginas'
@@ -157,22 +157,6 @@ function HerstelPagina({ m, onInvul }: PaginaProps) {
 
 // ── Bregje ──
 
-// ── Week ──
-function Brief({ m }: PaginaProps) {
-  const b = m.brief
-  return (
-    <div className="d-pagina smal">
-      <Kop titel="Ochtendbrief" sub={b ? `${korteDag(b.datum)} · gemaakt om ${b.gegenereerd_op.slice(11, 16)}` : 'Nog geen brief'} />
-      {m.rapport?.status && m.rapportVanVandaag && (
-        <><H2>Ochtendroutine</H2><Lijst>{m.rapport.status.map((s) => <Rij key={s.onderdeel} l={s.onderdeel} s={s.reden} w={s.stand} wc={s.stand === 'gelukt' ? 'd-goed' : s.stand === 'deels' ? 'd-let' : 'd-slecht'} />)}</Lijst></>
-      )}
-      {b?.secties.map((s) => (
-        <div key={s.id}><H2>{s.titel}</H2><div className="d-tekstblok">{s.tekst.trim()}</div></div>
-      ))}
-    </div>
-  )
-}
-
 function Meer({ onNaar, m }: PaginaProps) {
   const r = m.rapport
   const acties = useActiesKlaar(r?.datum)
@@ -191,5 +175,5 @@ function Meer({ onNaar, m }: PaginaProps) {
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
   herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina, trends: TrendsPagina,
-  zaak: ZaakPagina, omzet: OmzetPagina, mail: MailPagina, meppie: MeppiePagina, geld: GeldPagina, brief: Brief, meer: Meer,
+  zaak: ZaakPagina, omzet: OmzetPagina, mail: MailPagina, meppie: MeppiePagina, geld: GeldPagina, meer: Meer,
 }
