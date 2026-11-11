@@ -306,3 +306,23 @@ button.d-rij:disabled { opacity: .5; cursor: default; }
 .d-rollen { display: inline-flex; gap: 4px; flex-wrap: wrap; }
 .d-rollen span { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 99px; }
 .d-blokje { display: inline-block; width: 10px; height: 10px; border-radius: 3px; vertical-align: -1px; }
+
+/* ── Omzet (11 nov 2026) ── */
+.d-stats4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@container hoofd (max-width: 640px) { .d-stats4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.d-stat { background: var(--card); border-radius: 14px; box-shadow: var(--schaduw); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.d-prive .d-stat { background: var(--card2); box-shadow: none; }
+.d-stat > span { font-size: 13px; color: var(--label2); }
+.d-stat b { font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui; font-size: 24px; font-weight: 700; }
+.d-stat small { font-size: 12.5px; color: var(--label2); }
+.d-stat small.d-goed { color: var(--green); } .d-stat small.d-let { color: var(--orange); }
+.d-weekas { display: flex; gap: 3px; margin-top: 4px; }
+.d-weekas small { flex: 1; text-align: center; font-size: 10px; color: var(--label2); min-width: 0; overflow: hidden; }
+.d-mixrij { display: grid; grid-template-columns: 130px minmax(0, 1fr) 120px; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
+@container hoofd (max-width: 520px) { .d-mixrij { grid-template-columns: 96px minmax(0, 1fr) 70px; } .d-mixrij small { display: none; } }
+.d-mixrij > span:last-child { text-align: right; }
+.d-mixrij small { color: var(--label2); }
+.d-mixbalk { position: relative; height: 10px; background: var(--fill); border-radius: 99px; }
+.d-mixbalk i { position: absolute; inset: 0 auto 0 0; background: var(--teal); border-radius: 99px; }
+.d-mixbalk b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--label); opacity: .6; border-radius: 2px; }
+.d-prive { background: var(--card); border-radius: 16px; box-shadow: var(--schaduw); padding: 16px 18px; border: 1.5px dashed color-mix(in srgb, var(--purple) 40%, transparent); }

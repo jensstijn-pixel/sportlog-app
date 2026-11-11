@@ -26,6 +26,27 @@ export interface Bregje {
     loon: { kosten: number; uren: number; mensen: number; pct: number; doelPct: number; budget: number } | null
     diensten: BregjeDienst[]
     regels: string[]
+    // Sinds 11 nov 2026 (ronde Omzet):
+    mix?: { groep: string; omzet: number; aandeel: number; normaal: number | null }[]
+    kansen?: { categorie: string; nu: number | null; normaal: number | null; opvallend: boolean }[]
+    loonReeks?: { datum: string; kosten: number | null; pct: number | null; pctZonderJens: number | null }[]
+    voorstelEcht?: {
+      dag: {
+        perAfd: Record<'keuken' | 'bediening', { voorstel: number; echt: number; nVoorstel: number; nEcht: number }>
+        mensen: { naam: string; afdeling: string; voorstel: { van: string; tot: string | null; sluit: string; kosten: number } | null; echt: { van: string; tot: string; kosten: number } | null }[]
+      } | null
+      sinds: string | null
+      avonden: number
+      totaal: { keuken: number; bediening: number }
+      perAvond: { datum: string; keuken: number; bediening: number }[]
+    }
+    weken?: { maandag: string; omzet: number; couverts: number; dagen: number; gembes: number | null }[]
+    maanden?: { maand: string; omzet: number; couverts: number; gembes: number | null; dagen: number; heel: boolean; vorigJaar: { omzet: number; couverts: number; gembes: number } | null }[]
+    contract?: {
+      maand: string; heel: boolean; dagen: number; collegasPct: number; metJensPct: number; jensUren: number; jensKosten: number
+      contractNetto: number; contractKosten: number; contractNaarRato: number; contractUren: number
+      verschilZelfdeUren: number; verschilMetVervanging: number; caseGrensPct: number
+    } | null
   } | null
   vandaag: {
     datum: string

@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import type { Herstel, Taak } from '../types'
-import { Ic, Pijl, Spark, Staven, Vinkje } from './teken'
+import { Ic, Pijl, Staven, Vinkje } from './teken'
 import { eur, gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
 import { TijdGrafiek } from './TijdGrafiek'
 import { TrainingPagina } from './TrainingPagina'
@@ -8,6 +8,7 @@ import { GewichtPagina, SchermtijdPagina } from './LichaamPaginas'
 import { TakenPagina } from './TakenPagina'
 import { TrendsPagina } from './TrendsPagina'
 import { ZaakPagina } from './ZaakPagina'
+import { OmzetPagina } from './OmzetPagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -153,40 +154,6 @@ function NietVers({ m }: { m: Model }) {
   return <p className="d-voetnoot" style={{ margin: '-12px 0 18px' }}>Rapport van {korteDag(m.rapport.datum)}: de ochtendroutine heeft vandaag nog niet gedraaid.</p>
 }
 
-function Omzet({ m }: PaginaProps) {
-  const g = m.bregje?.gisteren
-  if (!g) return <div className="d-pagina smal"><Kop titel="Omzet" sub="Nog geen kassarapport verwerkt" /></div>
-  return (
-    <div className="d-pagina">
-      <Kop titel="Omzet" sub={`${korteDag(g.datum)}${g.besteVan ? ` · beste van de laatste ${g.besteVan}` : ''}`} />
-      <div className="d-twee">
-        <div>
-          <div className="d-lijst d-grafiek">
-            <div className="kop"><b className="d-num">{eur(g.gembes, 2)}<small>gembes</small></b><span>{g.gemWeekdag != null ? `gem. ${eur(g.gemWeekdag, 2)}` : ''}</span></div>
-            <Staven waarden={g.gembesReeks.map((x) => x.gembes)} h={90} kleur="var(--teal)" />
-          </div>
-          <p className="d-voetnoot">Dezelfde weekdag, laatste {g.gembesReeks.length} keer; rechts de laatste.</p>
-        </div>
-        <div>
-          <div className="d-lijst d-grafiek">
-            <div className="kop"><b className="d-num">{eur(g.omzet)}<small>omzet</small></b><span>14 dagen</span></div>
-            <Spark waarden={g.omzetReeks.map((x) => x.omzet)} h={90} kleur="var(--teal)" />
-          </div>
-        </div>
-      </div>
-      <H2>De dag</H2>
-      <Lijst>
-        <Rij l="Couverts" w={komma(g.couverts)} />
-        <Rij l="Omzet" w={eur(g.omzet, 2)} s={`${eur(g.omzetEx, 2)} zonder btw`} />
-        {g.loon && <Rij l="Loon" w={`${eur(g.loon.kosten, 2)} · ${komma(g.loon.pct)}%`} wc={g.loon.pct > g.loon.doelPct ? 'd-let' : 'd-goed'} s={`doel ${g.loon.doelPct}% = ${eur(g.loon.budget)} · ${g.loon.mensen} mensen, ${komma(g.loon.uren)} uur`} />}
-      </Lijst>
-      {!!g.diensten.length && (<><H2>Diensten</H2><Lijst>{g.diensten.map((d) => <Rij key={d.naam + d.van} l={d.naam} w={`${d.van}–${d.tot} · ${eur(d.kosten)}`} />)}</Lijst></>)}
-      <H2>Dagrapport</H2>
-      <Lijst>{g.regels.map((x, j) => <Rij key={j} l={<span style={{ fontSize: 14 }}>{x.trim()}</span>} />)}</Lijst>
-    </div>
-  )
-}
-
 function Mail({ m }: PaginaProps) {
   const r = m.rapport
   return (
@@ -273,5 +240,5 @@ function Meer({ onNaar, m }: PaginaProps) {
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
   herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina, trends: TrendsPagina,
-  zaak: ZaakPagina, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
+  zaak: ZaakPagina, omzet: OmzetPagina, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }
