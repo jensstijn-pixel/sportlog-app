@@ -239,3 +239,55 @@ button.d-rij:disabled { opacity: .5; cursor: default; }
 .d-tekstvak:focus { outline: 2px solid var(--blue); }
 .d-veld { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; font-size: 13px; color: var(--label2); }
 .d-knop:disabled { opacity: .5; }
+
+/* ── Logboek (11 nov 2026) ── */
+.d-paginakop { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.d-rond { width: 30px; height: 30px; border-radius: 50%; background: var(--fill); color: var(--blue); font-size: 18px; line-height: 1; display: grid; place-items: center; }
+.d-rond:disabled { color: var(--label3); }
+.d-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.d-stats div { background: var(--card2); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; }
+.d-stats b { font-family: ui-rounded, 'SF Pro Rounded', -apple-system, system-ui; font-size: 22px; font-variant-numeric: tabular-nums; }
+.d-stats span { font-size: 12px; color: var(--label2); }
+.d-vraagkaart { background: color-mix(in srgb, var(--blue) 9%, var(--card)); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.45; }
+.d-vraagkaart b { display: block; font-size: 13px; color: var(--blue); margin-bottom: 2px; }
+.d-vraagkaart p { margin: 0; }
+
+.d-logboek { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@container hoofd (max-width: 820px) { .d-logboek { grid-template-columns: minmax(0, 1fr); } }
+.d-maand { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.d-maand > small { text-align: center; font-size: 11px; color: var(--label2); padding-bottom: 6px; text-transform: uppercase; }
+.d-maanddag { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 0 5px; border-radius: 10px; min-height: 50px; color: var(--label); }
+.d-maanddag .nr { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-variant-numeric: tabular-nums; }
+.d-maanddag[data-buiten] { color: var(--label3); }
+.d-maanddag[data-vandaag] .nr { color: var(--red); font-weight: 700; }
+.d-maanddag[aria-pressed='true'] .nr { background: var(--label); color: var(--card); font-weight: 600; }
+.d-maanddag[aria-pressed='true'][data-vandaag] .nr { background: var(--red); color: #fff; }
+@media (hover: hover) { .d-maanddag:hover { background: var(--fill); } }
+.d-maanddag .tekens { display: flex; align-items: center; gap: 3px; height: 14px; }
+.punt { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); display: inline-block; }
+.d-weekletter { width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: #fff; font-size: 12px; font-weight: 700; display: grid; place-items: center; flex: none; }
+.d-weekletter.klein { width: 14px; height: 14px; font-size: 9px; display: inline-grid; }
+.d-legenda { display: flex; gap: 14px; font-size: 12px; color: var(--label2); margin-top: 8px; }
+.d-legenda > span { display: inline-flex; align-items: center; gap: 5px; }
+
+.d-dagkop { font-size: 22px; font-weight: 700; margin: 4px 4px 0; letter-spacing: -.01em; }
+.d-notitiekaart { display: block; width: 100%; text-align: left; background: var(--card); border-radius: 14px; box-shadow: var(--schaduw); padding: 14px 16px; color: var(--label); }
+.d-notitiekaart .kop { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 16px; }
+.d-notitiekaart p { margin: 10px 0 0; font-size: 15px; line-height: 1.5; white-space: pre-wrap; }
+.d-signaalblok { margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--card2); font-size: 14px; line-height: 1.45; display: flex; flex-direction: column; align-items: flex-start; }
+.d-signaalblok b { font-size: 12px; color: var(--label2); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 2px; }
+
+.d-energie { display: inline-flex; gap: 4px; flex: none; }
+.d-energie i, .d-energie button { width: 8px; height: 8px; border-radius: 50%; background: var(--fill); display: block; }
+.d-energie [data-aan] { background: var(--green); }
+.d-energie button { width: 22px; height: 22px; }
+
+.d-titelveld { width: 100%; border: 0; background: transparent; color: var(--label); font-size: 24px; font-weight: 700; padding: 4px 0; outline: none; }
+.d-titelveld::placeholder { color: var(--label3); }
+.d-twee-velden { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.d-veldkaart { background: var(--card2); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; font-weight: 600; }
+.d-veldkaart > span:first-child { font-size: 11px; font-weight: 500; color: var(--label2); text-transform: uppercase; letter-spacing: .04em; }
+.d-veldkaart input { width: 3.2em; border: 0; background: transparent; color: var(--label); font: inherit; outline: none; }
+.d-chipkeuze { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.d-chipkeuze button { height: 30px; padding: 0 12px; border-radius: 99px; background: var(--fill); color: var(--label); font-size: 13px; font-weight: 500; }
+.d-chipkeuze button[aria-pressed='true'] { background: var(--blue); color: #fff; }
