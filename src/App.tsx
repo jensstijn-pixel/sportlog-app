@@ -25,7 +25,7 @@ import {
 } from './lib/github'
 import { gisterenISO, nuISO, vandaagISO } from './lib/datum'
 import Gewicht from './schermen/Gewicht'
-import Instellingen from './schermen/Instellingen'
+import { InstellingenPagina } from './dashboard/InstellingenPagina'
 import Herstel from './schermen/Herstel'
 import Schermtijd from './schermen/Schermtijd'
 import { Schil, type Pagina } from './dashboard/Schil'
@@ -95,7 +95,7 @@ export default function App() {
       await syncMeppie(),
     ]
     setWachtend(aantalWachtend())
-    setSyncFout(uitkomsten.find((r) => r.fout)?.fout)
+    let fout = uitkomsten.find((r) => r.fout)?.fout
     try {
       await haalTerug()
       // Wat het andere toestel (telefoon/laptop) invulde, sinds 11 nov 2026.
@@ -108,9 +108,12 @@ export default function App() {
         setMeppie(opslag.meppie())
       }
       setAfgeleid((n) => n + 1)
-    } catch {
-      // Terughalen is bijvangst; een mislukking mag het opslaan niet raken.
+    } catch (e) {
+      // Terughalen is bijvangst: een mislukking mag het opslaan niet raken, maar je moet hem wel zien.
+      fout ??= e instanceof Error ? e.message : 'Ophalen uit de repo mislukt.'
     }
+    setSyncFout(fout)
+    opslag.zetLaatsteSync({ op: nuISO(), fout })
     setSyncBezig(false)
   }, [])
 
@@ -250,10 +253,11 @@ export default function App() {
         )
       case 'instellingen':
         return (
-          <Instellingen
-            aantalNotities={notities.length}
-            wachtend={wachtend}
-            onTerug={() => naar('overzicht')}
+          <InstellingenPagina
+            vandaag={vandaagISO()}
+            syncBezig={syncBezig}
+            syncFout={syncFout}
+            onSync={() => void synchroniseer()}
             onGewijzigd={() => {
               setNotities(opslag.notities())
               setTaken(opslag.taken())
@@ -276,7 +280,7 @@ export default function App() {
   })()
 
   // Oude schermen (eigen kop, telefoonbreedte) krijgen een smalle kolom binnen de schil.
-  const isOud = scherm.naam !== 'pagina' || ['instellingen'].includes(scherm.p)
+  const isOud = scherm.naam !== 'pagina'
   const openActies = model.rapportVanVandaag && model.rapport ? model.rapport.acties.length : 0
 
   return (

@@ -31,6 +31,7 @@ const K = {
   meppie: 'sportlog.meppie',
   meppieWachtrij: 'sportlog.meppieWachtrij',
   geldWeek: 'sportlog.geldWeek',
+  laatsteSync: 'sportlog.laatsteSync',
 }
 
 export interface Instellingen {
@@ -153,6 +154,10 @@ export const opslag = {
   /** Geld en uren van de laatste week (sinds 11 nov 2026). */
   geldWeek: () => lees<GeldWeek | null>(K.geldWeek, null),
   zetGeldWeek: (g: GeldWeek) => schrijf(K.geldWeek, g),
+
+  /** Wanneer de laatste sync klaar was en of er iets misging (voor Instellingen). */
+  laatsteSync: () => lees<{ op: string; fout?: string } | null>(K.laatsteSync, null),
+  zetLaatsteSync: (s: { op: string; fout?: string }) => schrijf(K.laatsteSync, s),
 }
 
 /** Een Meppie-melding bewaren en in de wachtrij zetten. */

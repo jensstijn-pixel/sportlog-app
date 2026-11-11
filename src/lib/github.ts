@@ -555,6 +555,8 @@ export async function haalBijVanRepo(): Promise<number> {
     zet: (items: T[]) => void,
   ) {
     const res = await fetch(`${padUrl(inst, naam)}?ref=main`, { headers: koppen(inst) })
+    // Verlopen of fout token: hardop melden, anders staat Instellingen op "bij" terwijl er niets binnenkomt.
+    if (res.status === 401 || res.status === 403) throw await fout(res)
     if (!res.ok) return
     const bestanden = (await res.json()) as { name: string; path: string; type: string; sha: string }[]
     const nieuw: T[] = []

@@ -6,6 +6,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 // GitHub Pages serveert op /sportlog-app/ — vandaar de base.
 export default defineConfig({
   base: '/sportlog-app/',
+  // Bouwtijd = versie, onderaan Instellingen: zo zie je of de telefoon de nieuwste build heeft.
+  define: { __GEBOUWD__: JSON.stringify(new Date().toISOString()) },
   plugins: [
     react(),
     tailwindcss(),

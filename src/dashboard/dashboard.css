@@ -366,3 +366,11 @@ button.d-rij:disabled { opacity: .5; cursor: default; }
 .d-afkap { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .d-maandstaven .kolom.naast { flex-direction: row; align-items: flex-end; gap: 2px; }
 .d-maandstaven .kolom.naast i { width: 50%; }
+
+/* Inklapbare uitleg (Instellingen → token maken). */
+.d-uitleg { background: var(--card); border-radius: 12px; box-shadow: var(--schaduw); padding: 0 16px; font-size: 14px; line-height: 1.5; }
+.d-uitleg summary { min-height: 48px; display: flex; align-items: center; cursor: pointer; color: var(--blue); font-size: 15px; list-style: none; }
+.d-uitleg summary::-webkit-details-marker { display: none; }
+.d-uitleg ol { margin: 0; padding-left: 20px; }
+.d-uitleg li + li { margin-top: 4px; }
+.d-uitleg p { color: var(--label2); font-size: 13px; margin: 10px 0 14px; }
