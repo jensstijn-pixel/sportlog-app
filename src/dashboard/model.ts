@@ -77,6 +77,8 @@ export interface Model {
     signalen: { soort: 'stagnatie' | 'pijn'; oefening: string | null; tekst: string }[]
   }
   dataset: Dataset | null
+  /** Energie per notitie (1–5), voor Trends. */
+  energie: { datum: string; energie: number }[]
   taken: {
     gekozen: { taak: Taak; v?: Verrijking; ligt: number }[]
     overig: { taak: Taak; v?: Verrijking }[]
@@ -103,6 +105,7 @@ export function bouwModel(p: {
   dataset: Dataset | null
   bregje: Bregje | null
   rapport: Rapport | null
+  notities?: { datum: string; energie: number }[]
 }): Model {
   const vandaag = vandaagISO()
   const gisteren = gisterenISO()
@@ -216,6 +219,7 @@ export function bouwModel(p: {
       signalen: p.brief?.trainingSignalen ?? [],
     },
     dataset: p.dataset,
+    energie: (p.notities ?? []).map((n) => ({ datum: n.datum, energie: n.energie })),
     taken: {
       gekozen, overig, afgerond,
       cat: (t) => (p.verrijking[t.id] ? CATEGORIE_LABELS[p.verrijking[t.id].categorie] : 'Nieuw'),
@@ -314,4 +318,21 @@ export function subtakenVan(t: Taak) {
   if (t.subtaken?.length) return { titel: splitsPunten(t.tekst)?.titel ?? t.tekst, punten: t.subtaken }
   const s = splitsPunten(t.tekst)
   return s ? { titel: s.titel, punten: s.punten.map((x) => ({ tekst: x, klaar: false })) } : null
+}
+
+/** Gemiddelde per week (ma–zo) over de laatste `weken` weken, oud → nieuw. Null = geen meting die week. */
+export function perWeek(punten: { datum: string; waarde: number | null }[], weken: number, som = false) {
+  const d = new Date()
+  d.setHours(12, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  const uit: { maandag: string; waarde: number | null; n: number }[] = []
+  for (let w = weken - 1; w >= 0; w--) {
+    const ma = new Date(d)
+    ma.setDate(d.getDate() - w * 7)
+    const van = isoMin(`${ma.getFullYear()}-${String(ma.getMonth() + 1).padStart(2, '0')}-${String(ma.getDate()).padStart(2, '0')}`, 0)
+    const tot = isoMin(van, -6)
+    const xs = punten.filter((p) => p.datum >= van && p.datum <= tot && p.waarde != null).map((p) => p.waarde as number)
+    uit.push({ maandag: van, waarde: xs.length ? (som ? xs.reduce((a, b) => a + b, 0) : xs.reduce((a, b) => a + b, 0) / xs.length) : (som ? 0 : null), n: xs.length })
+  }
+  return uit
 }

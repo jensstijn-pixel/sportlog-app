@@ -6,6 +6,7 @@ import { TijdGrafiek } from './TijdGrafiek'
 import { TrainingPagina } from './TrainingPagina'
 import { GewichtPagina, SchermtijdPagina } from './LichaamPaginas'
 import { TakenPagina } from './TakenPagina'
+import { TrendsPagina } from './TrendsPagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -309,6 +310,6 @@ function Meer({ onNaar, m }: PaginaProps) {
 }
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
-  herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina,
+  herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina, trends: TrendsPagina,
   zaak: Zaak, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }

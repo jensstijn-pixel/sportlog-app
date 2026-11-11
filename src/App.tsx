@@ -26,7 +26,6 @@ import Gewicht from './schermen/Gewicht'
 import Instellingen from './schermen/Instellingen'
 import Herstel from './schermen/Herstel'
 import Schermtijd from './schermen/Schermtijd'
-import Tracking from './schermen/Tracking'
 import { Schil, type Pagina } from './dashboard/Schil'
 import { Overzicht, type Invul } from './dashboard/Overzicht'
 import { PAGINAS } from './dashboard/Paginas'
@@ -41,18 +40,6 @@ type Scherm =
   | { naam: 'herstel' }
   | { naam: 'schermtijd' }
   | { naam: 'gewicht' }
-
-/** Het weekoverzicht van deze week, als de Mac het al geschreven heeft. */
-function huidigWeekoverzicht() {
-  const nu = new Date()
-  const do_ = new Date(nu)
-  do_.setDate(nu.getDate() - ((nu.getDay() + 6) % 7) + 3) // donderdag bepaalt het weeknummer
-  const start = new Date(do_.getFullYear(), 0, 4)
-  const week = 1 + Math.round(((do_.getTime() - start.getTime()) / 86400000 -
-    3 + ((start.getDay() + 6) % 7)) / 7)
-  const sleutel = `${do_.getFullYear()}-${String(week).padStart(2, '0')}`
-  return opslag.overzicht()[sleutel]
-}
 
 /** Alles wat nog naar GitHub moet, over alle wachtrijen heen. */
 function aantalWachtend(): number {
@@ -210,6 +197,7 @@ export default function App() {
     dataset: opslag.dataset(),
     bregje: opslag.bregje(),
     rapport: opslag.rapport(),
+    notities,
   })
   const invullen = (i: Invul) => setScherm({ naam: i })
   const nieuweNotitie = () => { setNieuweNotitieOpen(true); naar('logboek') }
@@ -246,15 +234,6 @@ export default function App() {
             onVraag={stelVraag}
           />
         )
-      case 'tracking':
-        return (
-          <Tracking
-            key={afgeleid}
-            dataset={opslag.dataset()}
-            weekoverzicht={huidigWeekoverzicht()}
-            onTab={() => {}}
-          />
-        )
       case 'instellingen':
         return (
           <Instellingen
@@ -282,7 +261,7 @@ export default function App() {
   })()
 
   // Oude schermen (eigen kop, telefoonbreedte) krijgen een smalle kolom binnen de schil.
-  const isOud = scherm.naam !== 'pagina' || ['tracking', 'instellingen'].includes(scherm.p)
+  const isOud = scherm.naam !== 'pagina' || ['instellingen'].includes(scherm.p)
   const openActies = model.rapportVanVandaag && model.rapport ? model.rapport.acties.length : 0
 
   return (

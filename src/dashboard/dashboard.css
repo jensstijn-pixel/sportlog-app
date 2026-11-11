@@ -291,3 +291,13 @@ button.d-rij:disabled { opacity: .5; cursor: default; }
 .d-chipkeuze { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .d-chipkeuze button { height: 30px; padding: 0 12px; border-radius: 99px; background: var(--fill); color: var(--label); font-size: 13px; font-weight: 500; }
 .d-chipkeuze button[aria-pressed='true'] { background: var(--blue); color: #fff; }
+
+/* ── Trends (11 nov 2026) ── */
+.d-trends { display: grid; grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); gap: 12px; margin-top: 18px; }
+@container hoofd (max-width: 520px) { .d-trends { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+.d-trend { background: var(--card); border-radius: 18px; box-shadow: var(--schaduw); padding: 12px 14px 12px; text-align: left; color: var(--label); display: flex; flex-direction: column; min-width: 0; transition: transform 150ms var(--uit); }
+.d-trend:active { transform: scale(.98); }
+.d-trend .kop { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; }
+.d-trend .kop svg { color: var(--label3); }
+.d-trend .d-spark { margin-top: 10px; }
+.d-trend .d-onder { white-space: normal; }

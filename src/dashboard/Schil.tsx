@@ -3,7 +3,7 @@ import { Ic, glyph, type GlyphNaam } from './teken'
 import './dashboard.css'
 
 export type Pagina =
-  | 'overzicht' | 'herstel' | 'training' | 'gewicht' | 'schermtijd' | 'taken' | 'logboek' | 'tracking'
+  | 'overzicht' | 'herstel' | 'training' | 'gewicht' | 'schermtijd' | 'taken' | 'logboek' | 'trends'
   | 'zaak' | 'omzet' | 'mail' | 'meppie' | 'geld' | 'brief' | 'meer' | 'instellingen'
 
 export const NAV: { p: Pagina; naam: string; g: GlyphNaam; kleur: string; groep: string | null }[] = [
@@ -14,7 +14,7 @@ export const NAV: { p: Pagina; naam: string; g: GlyphNaam; kleur: string; groep:
   { p: 'schermtijd', naam: 'Schermtijd', g: 'klok', kleur: 'var(--blue)', groep: 'Persoonlijk' },
   { p: 'taken', naam: 'Taken', g: 'lijst', kleur: 'var(--blue)', groep: 'Persoonlijk' },
   { p: 'logboek', naam: 'Logboek', g: 'boek', kleur: 'var(--indigo)', groep: 'Persoonlijk' },
-  { p: 'tracking', naam: 'Tracking', g: 'lijn', kleur: 'var(--teal)', groep: 'Persoonlijk' },
+  { p: 'trends', naam: 'Trends', g: 'lijn', kleur: 'var(--teal)', groep: 'Persoonlijk' },
   { p: 'zaak', naam: 'Vandaag in de zaak', g: 'winkel', kleur: 'var(--teal)', groep: 'Bregje' },
   { p: 'omzet', naam: 'Omzet', g: 'grafiek', kleur: 'var(--teal)', groep: 'Bregje' },
   { p: 'mail', naam: 'Mail & Guestplan', g: 'mail', kleur: 'var(--pink)', groep: 'Bregje' },
