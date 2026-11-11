@@ -124,7 +124,7 @@ export default function Grafiek({
               y1={H - 1}
               x2={vorm.breedte}
               y2={H - 1}
-              stroke="rgba(255,255,255,0.07)"
+              stroke="var(--sep)"
               strokeWidth={1}
             />
             <path

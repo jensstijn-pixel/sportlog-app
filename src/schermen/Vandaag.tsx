@@ -256,7 +256,7 @@ export default function Vandaag({
         </Kaart>
       )}
 
-      <p className="mt-6 text-[12px] text-[#5A5E5A]">
+      <p className="mt-6 text-[12px] text-vaag">
         {briefVanVandaag
           ? `Brief van ${briefVanVandaag.gegenereerd_op.slice(11, 16)} · taken live uit de app`
           : 'Taken komen live uit de app'}

@@ -184,7 +184,7 @@ export default function Tracking({
         </>
       )}
 
-      <p className="mt-[18px] text-[12px] text-[#5A5E5A]">
+      <p className="mt-[18px] text-[12px] text-vaag">
         {dataset?.bijgewerkt
           ? `Bijgewerkt ${dataset.bijgewerkt.slice(0, 10)} · herstelcijfers handmatig ingevuld`
           : 'Nog niet bijgewerkt door de Mac'}

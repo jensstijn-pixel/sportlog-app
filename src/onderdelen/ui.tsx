@@ -256,6 +256,8 @@ export function Vouw({
   )
 }
 
+const DASHBOARD_SCHIL = true
+
 export type TabNaam = 'vandaag' | 'logboek' | 'tracking'
 
 const TAB_ICOON: Record<TabNaam, (kleur: string) => ReactNode> = {
@@ -293,6 +295,9 @@ export function TabBalk({
   aantalTaken?: number
   onKies: (tab: TabNaam) => void
 }) {
+  // Sinds 11 nov 2026 navigeer je via de zijbalk/tabbalk van het dashboard (src/dashboard/Schil).
+  // Deze oude balk zou daar dubbel onder komen te staan.
+  if (DASHBOARD_SCHIL) return null
   const tabs: { naam: TabNaam; label: string }[] = [
     { naam: 'vandaag', label: 'Vandaag' },
     { naam: 'logboek', label: 'Logboek' },

@@ -342,5 +342,7 @@ export interface Dagbrief {
   gegenereerd_op: string
   /** Naam van de trainingsdag uit het schema, of null op een rustdag. */
   dagnaam: string | null
+  /** Volledige titel van de training ("Full Body A"), of null op een rustdag. */
+  dagtitel?: string | null
   secties: BriefSectie[]
 }

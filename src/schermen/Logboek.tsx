@@ -174,7 +174,7 @@ export default function Logboek({
                 >
                   <span
                     className="text-[10px] font-semibold"
-                    style={{ color: aan ? '#C3E0FF' : '#6C706A' }}
+                    style={{ color: aan ? 'var(--blue)' : 'var(--label3)' }}
                   >
                     {WEEKDAGLETTERS[i]}
                   </span>
@@ -185,14 +185,14 @@ export default function Logboek({
                     style={
                       aan
                         ? undefined
-                        : { color: isVandaag ? '#9CCBFF' : buitenMaand ? '#54584C' : '#EDEFEA' }
+                        : { color: isVandaag ? 'var(--blue)' : buitenMaand ? 'var(--label3)' : 'var(--label)' }
                     }
                   >
                     {parseISO(dag).getDate()}
                   </span>
                   <span
                     className="h-1 w-1 rounded-full"
-                    style={{ background: isVandaag && !aan ? '#9CCBFF' : 'transparent' }}
+                    style={{ background: isVandaag && !aan ? 'var(--blue)' : 'transparent' }}
                   />
                 </button>
               )

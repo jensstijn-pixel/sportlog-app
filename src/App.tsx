@@ -30,19 +30,22 @@ import Instellingen from './schermen/Instellingen'
 import Herstel from './schermen/Herstel'
 import Schermtijd from './schermen/Schermtijd'
 import Tracking from './schermen/Tracking'
-import Vandaag from './schermen/Vandaag'
+import { Schil, type Pagina } from './dashboard/Schil'
+import { Overzicht, type Invul } from './dashboard/Overzicht'
+import { PAGINAS } from './dashboard/Paginas'
+import { bouwModel } from './dashboard/model'
 
+/** Sinds 11 nov 2026: het dashboard (zijbalk + widgets) is de schil. Een `pagina` is alles wat
+ *  in de zijbalk staat; de overige schermen (invullen, notitie bewerken) openen daarbovenop en
+ *  gaan met "terug" naar de laatste pagina. */
 type Scherm =
-  | { naam: 'logboek' }
+  | { naam: 'pagina'; p: Pagina }
   | { naam: 'editor'; id?: string; datum?: string }
   | { naam: 'detail'; id: string }
   | { naam: 'inzicht' }
-  | { naam: 'instellingen' }
   | { naam: 'herstel' }
   | { naam: 'schermtijd' }
   | { naam: 'gewicht' }
-  | { naam: 'tracking' }
-  | { naam: 'vandaag' }
 
 /** Het weekoverzicht van deze week, als de Mac het al geschreven heeft. */
 function huidigWeekoverzicht() {
@@ -69,7 +72,14 @@ function aantalWachtend(): number {
 }
 
 export default function App() {
-  const [scherm, setScherm] = useState<Scherm>({ naam: 'vandaag' })
+  const [scherm, setScherm] = useState<Scherm>({ naam: 'pagina', p: 'overzicht' })
+  const [pagina, setPagina] = useState<Pagina>('overzicht')
+  const naar = (p: Pagina) => {
+    setPagina(p)
+    setScherm({ naam: 'pagina', p })
+    window.scrollTo(0, 0)
+  }
+  const terug = () => setScherm({ naam: 'pagina', p: pagina })
   const [notities, setNotities] = useState<Notitie[]>(() => opslag.notities())
   const [taken, setTaken] = useState<Taak[]>(() => opslag.taken())
   const [herstel, setHerstel] = useState<Record<string, HerstelType>>(() => opslag.herstel())
@@ -122,14 +132,14 @@ export default function App() {
   function opslaan(notitie: Notitie) {
     setNotities(bewaarNotitie(notitie))
     setWachtend(aantalWachtend())
-    setScherm({ naam: 'logboek' })
+    naar('logboek')
     void synchroniseer()
   }
 
   function verwijder(id: string) {
     setNotities(verwijderNotitie(id))
     setWachtend(aantalWachtend())
-    setScherm({ naam: 'logboek' })
+    naar('logboek')
   }
 
   function taakToevoegen(tekst: string) {
@@ -149,21 +159,21 @@ export default function App() {
   function herstelOpslaan(h: HerstelType) {
     setHerstel(bewaarHerstel(h))
     setWachtend(aantalWachtend())
-    setScherm({ naam: 'logboek' })
+    terug()
     void synchroniseer()
   }
 
   function schermtijdOpslaan(s: SchermtijdType) {
     setSchermtijd(bewaarSchermtijd(s))
     setWachtend(aantalWachtend())
-    setScherm({ naam: 'logboek' })
+    terug()
     void synchroniseer()
   }
 
   function gewichtOpslaan(g: GewichtType) {
     setGewicht(bewaarGewicht(g))
     setWachtend(aantalWachtend())
-    setScherm({ naam: 'vandaag' })
+    terug()
     void synchroniseer()
   }
 
@@ -181,136 +191,136 @@ export default function App() {
   const signalen = opslag.signalen()
   const huidige = 'id' in scherm && scherm.id ? notities.find((n) => n.id === scherm.id) : undefined
 
-  // Notitie verdwenen (verwijderd op een ander apparaat): val terug op het logboek.
-  const actief: Scherm = scherm.naam === 'detail' && !huidige ? { naam: 'logboek' } : scherm
+  const model = bouwModel({
+    brief: opslag.brief(),
+    herstel,
+    gewicht,
+    schermtijd,
+    taken,
+    verrijking: opslag.verrijking(),
+    dataset: opslag.dataset(),
+    bregje: opslag.bregje(),
+    rapport: opslag.rapport(),
+  })
+  const invullen = (i: Invul) => setScherm({ naam: i })
+  const nieuweNotitie = () => setScherm({ naam: 'editor' })
 
-  switch (actief.naam) {
-    case 'editor':
-      return (
-        <Editor
-          bestaand={huidige}
-          voorDatum={'datum' in scherm ? scherm.datum : undefined}
-          vraag={opslag.vraag()}
-          onOpslaan={opslaan}
-          onAnnuleer={() => setScherm(huidige ? { naam: 'detail', id: huidige.id } : { naam: 'logboek' })}
-          onVerwijder={huidige ? verwijder : undefined}
-        />
-      )
+  const inhoud = (() => {
+    switch (scherm.naam) {
+      case 'editor':
+        return (
+          <Editor
+            bestaand={huidige}
+            voorDatum={scherm.datum}
+            vraag={opslag.vraag()}
+            onOpslaan={opslaan}
+            onAnnuleer={() => (huidige ? setScherm({ naam: 'detail', id: huidige.id }) : terug())}
+            onVerwijder={huidige ? verwijder : undefined}
+          />
+        )
+      case 'detail':
+        // Notitie verdwenen (verwijderd op een ander apparaat): terug naar de pagina.
+        return huidige ? (
+          <Detail
+            notitie={huidige}
+            signaal={signalen[huidige.id]}
+            onTerug={terug}
+            onBewerk={() => setScherm({ naam: 'editor', id: huidige.id })}
+          />
+        ) : null
+      case 'inzicht':
+        return (
+          <Inzicht
+            key={afgeleid}
+            notities={notities}
+            overzichten={opslag.overzicht()}
+            gesteldeVragen={opslag.gesteldeVragen()}
+            onTerug={terug}
+            onVraag={stelVraag}
+          />
+        )
+      case 'herstel':
+        return <Herstel bestaand={herstel[vandaagISO()]} onOpslaan={herstelOpslaan} onTerug={terug} />
+      case 'schermtijd':
+        return <Schermtijd bestaand={schermtijd[gisterenISO()]} onOpslaan={schermtijdOpslaan} onTerug={terug} />
+      case 'gewicht':
+        return <Gewicht bestaand={gewicht[vandaagISO()]} alles={gewicht} onOpslaan={gewichtOpslaan} onTerug={terug} />
+    }
 
-    case 'detail':
-      return huidige ? (
-        <Detail
-          notitie={huidige}
-          signaal={signalen[huidige.id]}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-          onBewerk={() => setScherm({ naam: 'editor', id: huidige.id })}
-        />
-      ) : null
+    switch (scherm.p) {
+      case 'overzicht':
+        return <Overzicht key={afgeleid} m={model} onNaar={naar} onInvul={invullen} onTaakAfvinken={taakAfvinken} />
+      case 'logboek':
+        return (
+          <Logboek
+            key={afgeleid}
+            notities={notities}
+            status={status}
+            taken={taken}
+            verrijking={opslag.verrijking()}
+            herstel={herstel}
+            schermtijd={schermtijd}
+            onNieuweNotitie={(datum) => setScherm({ naam: 'editor', datum })}
+            onOpenNotitie={(n) => setScherm({ naam: 'detail', id: n.id })}
+            onTaakToevoegen={taakToevoegen}
+            onTaakAfvinken={taakAfvinken}
+            onInzicht={() => setScherm({ naam: 'inzicht' })}
+            onTab={() => {}}
+          />
+        )
+      case 'tracking':
+        return (
+          <Tracking
+            key={afgeleid}
+            dataset={opslag.dataset()}
+            gewicht={gewicht}
+            weekoverzicht={huidigWeekoverzicht()}
+            onTab={() => {}}
+          />
+        )
+      case 'instellingen':
+        return (
+          <Instellingen
+            aantalNotities={notities.length}
+            wachtend={wachtend}
+            onTerug={() => naar('overzicht')}
+            onGewijzigd={() => {
+              setNotities(opslag.notities())
+              setTaken(opslag.taken())
+              setHerstel(opslag.herstel())
+              setSchermtijd(opslag.schermtijd())
+              setGewicht(opslag.gewicht())
+              void synchroniseer()
+            }}
+          />
+        )
+      default: {
+        const P = PAGINAS[scherm.p]
+        return P ? (
+          <P key={afgeleid} m={model} onNaar={naar} onInvul={invullen} onTaakAfvinken={taakAfvinken}
+            onTaakToevoegen={taakToevoegen} onNotitie={nieuweNotitie} />
+        ) : null
+      }
+    }
+  })()
 
-    case 'inzicht':
-      return (
-        <Inzicht
-          key={afgeleid}
-          notities={notities}
-          overzichten={opslag.overzicht()}
-          gesteldeVragen={opslag.gesteldeVragen()}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-          onVraag={stelVraag}
-        />
-      )
+  // Oude schermen (eigen kop, telefoonbreedte) krijgen een smalle kolom binnen de schil.
+  const isOud = scherm.naam !== 'pagina' || ['logboek', 'tracking', 'instellingen'].includes(scherm.p)
+  const openActies = model.rapportVanVandaag && model.rapport ? model.rapport.acties.length : 0
 
-    case 'instellingen':
-      return (
-        <Instellingen
-          aantalNotities={notities.length}
-          wachtend={wachtend}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-          onGewijzigd={() => {
-            setNotities(opslag.notities())
-            setTaken(opslag.taken())
-            setHerstel(opslag.herstel())
-            setSchermtijd(opslag.schermtijd())
-            setGewicht(opslag.gewicht())
-            void synchroniseer()
-          }}
-        />
-      )
-
-    case 'herstel':
-      return (
-        <Herstel
-          bestaand={herstel[vandaagISO()]}
-          onOpslaan={herstelOpslaan}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-        />
-      )
-
-    case 'schermtijd':
-      return (
-        <Schermtijd
-          bestaand={schermtijd[gisterenISO()]}
-          onOpslaan={schermtijdOpslaan}
-          onTerug={() => setScherm({ naam: 'logboek' })}
-        />
-      )
-
-    case 'gewicht':
-      return (
-        <Gewicht
-          bestaand={gewicht[vandaagISO()]}
-          alles={gewicht}
-          onOpslaan={gewichtOpslaan}
-          onTerug={() => setScherm({ naam: 'vandaag' })}
-        />
-      )
-
-    case 'tracking':
-      return (
-        <Tracking
-          key={afgeleid}
-          dataset={opslag.dataset()}
-          gewicht={gewicht}
-          weekoverzicht={huidigWeekoverzicht()}
-          onTab={(t) => setScherm({ naam: t })}
-        />
-      )
-
-    case 'vandaag':
-      return (
-        <Vandaag
-          key={afgeleid}
-          brief={opslag.brief()}
-          taken={taken}
-          verrijking={opslag.verrijking()}
-          herstel={herstel[vandaagISO()]}
-          schermtijd={schermtijd[gisterenISO()]}
-          gewicht={gewicht}
-          onAfvinken={taakAfvinken}
-          onHerstel={() => setScherm({ naam: 'herstel' })}
-          onSchermtijd={() => setScherm({ naam: 'schermtijd' })}
-          onGewicht={() => setScherm({ naam: 'gewicht' })}
-          onInstellingen={() => setScherm({ naam: 'instellingen' })}
-          onTab={(t) => setScherm({ naam: t })}
-        />
-      )
-
-    default:
-      return (
-        <Logboek
-          key={afgeleid}
-          notities={notities}
-          status={status}
-          taken={taken}
-          verrijking={opslag.verrijking()}
-          herstel={herstel}
-          schermtijd={schermtijd}
-          onNieuweNotitie={(datum) => setScherm({ naam: 'editor', datum })}
-          onOpenNotitie={(n) => setScherm({ naam: 'detail', id: n.id })}
-          onTaakToevoegen={taakToevoegen}
-          onTaakAfvinken={taakAfvinken}
-          onInzicht={() => setScherm({ naam: 'inzicht' })}
-          onTab={(t) => setScherm({ naam: t })}
-        />
-      )
-  }
+  return (
+    <Schil
+      actief={scherm.naam === 'pagina' ? scherm.p : pagina}
+      onNaar={naar}
+      sync={status}
+      bijgewerkt={model.brief ? model.brief.gegenereerd_op.slice(11, 16) : null}
+      badges={{
+        overzicht: openActies ? { t: openActies, rood: true } : undefined,
+        taken: model.taken.gekozen.length ? { t: model.taken.gekozen.length } : undefined,
+        mail: model.rapport?.mail ? { t: model.rapport.mail.concepten } : undefined,
+      }}
+    >
+      {isOud ? <div className="d-oud">{inhoud}</div> : inhoud}
+    </Schil>
+  )
 }

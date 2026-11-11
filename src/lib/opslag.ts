@@ -1,4 +1,5 @@
 import type { Dagbrief, Dataset, FinancienDuiding, Gewicht, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Bregje, Rapport } from '../dashboard/typen'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -24,6 +25,8 @@ const K = {
   postenWachtrij: 'sportlog.postenWachtrij',
   financienDuiding: 'sportlog.financienDuiding',
   brief: 'sportlog.brief',
+  bregje: 'sportlog.bregje',
+  rapport: 'sportlog.rapport',
 }
 
 export interface Instellingen {
@@ -124,6 +127,14 @@ export const opslag = {
   /** De ochtendbrief van vandaag, door de Mac geschreven. */
   brief: () => lees<Dagbrief | null>(K.brief, null),
   zetBrief: (b: Dagbrief) => schrijf(K.brief, b),
+
+  /** Omzet, loon en bezetting voor het dashboard (Omzet-app, sinds 11 nov 2026). */
+  bregje: () => lees<Bregje | null>(K.bregje, null),
+  zetBregje: (b: Bregje) => schrijf(K.bregje, b),
+
+  /** Het ochtendrapport van /ochtendroutine (sinds 11 nov 2026). */
+  rapport: () => lees<Rapport | null>(K.rapport, null),
+  zetRapport: (r: Rapport) => schrijf(K.rapport, r),
 }
 
 /** Herstelcijfers van een dag opslaan; retourneert de nieuwe verzameling. */

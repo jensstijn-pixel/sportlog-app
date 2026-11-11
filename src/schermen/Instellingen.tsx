@@ -181,7 +181,7 @@ export default function Instellingen({
         ) : stand === 'geweigerd' ? (
           <p className="text-[13px] leading-[1.6] text-body">
             Meldingen zijn geweigerd voor deze app. Terugzetten kan alleen via Instellingen →
-            Meldingen → Sportlog op je telefoon.
+            Meldingen → Daily op je telefoon.
           </p>
         ) : stand === 'kan-niet' ? (
           <p className="text-[13px] leading-[1.6] text-body">
