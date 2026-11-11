@@ -11,6 +11,7 @@ import {
   verwijderNotitie,
 } from './lib/opslag'
 import {
+  haalBijVanRepo,
   haalTerug,
   stelVraag,
   syncGewicht,
@@ -110,6 +111,14 @@ export default function App() {
     setSyncFout(uitkomsten.find((r) => r.fout)?.fout)
     try {
       await haalTerug()
+      // Wat het andere toestel (telefoon/laptop) invulde, sinds 11 nov 2026.
+      if (await haalBijVanRepo()) {
+        setNotities(opslag.notities())
+        setTaken(opslag.taken())
+        setHerstel(opslag.herstel())
+        setSchermtijd(opslag.schermtijd())
+        setGewicht(opslag.gewicht())
+      }
       setAfgeleid((n) => n + 1)
     } catch {
       // Terughalen is bijvangst; een mislukking mag het opslaan niet raken.

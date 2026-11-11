@@ -1,4 +1,4 @@
-import type { Dagbrief, Dataset, FinancienDuiding, Notitie, OpenVraag, Post, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
+import type { Dagbrief, Dataset, FinancienDuiding, Gewicht, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 import { nuISO, weekJaar, weeknummer } from './datum'
 import type { Bregje, Rapport } from '../dashboard/typen'
 import { opslag, type Instellingen } from './opslag'
@@ -524,4 +524,74 @@ export async function herstelVanRepo(): Promise<number> {
     opslag.zetNotities(samen)
   }
   return opgehaald.length
+}
+
+/** Bijhalen wat een ánder toestel schreef (sinds 11 nov 2026: telefoon én laptop).
+ *
+ *  Per map één lijst-verzoek; GitHub geeft per bestand een sha (vingerafdruk). We halen alleen
+ *  bestanden op waarvan de sha anders is dan de vorige keer. Wat hier nog in een wachtrij staat
+ *  (lokaal ingevuld, nog niet verstuurd) wordt nooit overschreven.
+ *
+ *  Eerste keer op een toestel dat al data heeft: bestaande items krijgen alleen hun sha
+ *  genoteerd, behalve de laatste paar dagen en taken (afvinken op het andere toestel). Zo
+ *  haalt de telefoon niet ineens honderden bestanden op. */
+export async function haalBijVanRepo(): Promise<number> {
+  const inst = opslag.instellingen()
+  if (!inst.token || !navigator.onLine) return 0
+
+  const shas = opslag.repoSha()
+  const grens = new Date()
+  grens.setDate(grens.getDate() - 3)
+  const recent = (datum: string) => datum >= grens.toISOString().slice(0, 10)
+  let erbij = 0
+
+  async function map<T>(
+    naam: 'herstel' | 'gewicht' | 'schermtijd' | 'taken' | 'notities',
+    lokaalHeeft: (sleutel: string) => boolean,
+    wacht: string[],
+    altijdBijInit: (sleutel: string) => boolean,
+    zet: (items: T[]) => void,
+  ) {
+    const res = await fetch(`${padUrl(inst, naam)}?ref=main`, { headers: koppen(inst) })
+    if (!res.ok) return
+    const bestanden = (await res.json()) as { name: string; path: string; type: string; sha: string }[]
+    const nieuw: T[] = []
+    for (const b of bestanden) {
+      if (b.type !== 'file' || !b.name.endsWith('.json') || b.name === 'verrijking.json') continue
+      const sleutel = b.name.replace(/\.json$/, '')
+      if (wacht.includes(sleutel)) continue
+      if (shas[b.path] === b.sha) continue
+      if (shas[b.path] == null && lokaalHeeft(sleutel) && !altijdBijInit(sleutel)) {
+        shas[b.path] = b.sha
+        continue
+      }
+      const item = await leesJson<T>(inst, b.path).catch(() => null)
+      if (item) nieuw.push(item)
+      shas[b.path] = b.sha
+    }
+    if (nieuw.length) {
+      zet(nieuw)
+      erbij += nieuw.length
+    }
+  }
+
+  const dag = <T extends { datum: string }>(huidig: () => Record<string, T>, opslaan: (r: Record<string, T>) => void) =>
+    (items: T[]) => opslaan({ ...huidig(), ...Object.fromEntries(items.map((x) => [x.datum, x])) })
+
+  await map<Herstel>('herstel', (d) => !!opslag.herstel()[d], opslag.herstelWachtrij(), recent, dag(opslag.herstel, opslag.zetHerstel))
+  await map<Gewicht>('gewicht', (d) => !!opslag.gewicht()[d], opslag.gewichtWachtrij(), recent, dag(opslag.gewicht, opslag.zetGewicht))
+  await map<Schermtijd>('schermtijd', (d) => !!opslag.schermtijd()[d], opslag.schermtijdWachtrij(), recent, dag(opslag.schermtijd, opslag.zetSchermtijd))
+  await map<Taak>('taken', (id) => opslag.taken().some((t) => t.id === id), opslag.takenWachtrij(), () => true, (items) => {
+    const per = new Map(opslag.taken().map((t) => [t.id, t]))
+    for (const t of items) if (t.id) per.set(t.id, t)
+    opslag.zetTaken([...per.values()].sort((a, b) => (a.gemaakt < b.gemaakt ? 1 : -1)))
+  })
+  await map<Notitie>('notities', (id) => opslag.notities().some((n) => n.id === id), opslag.wachtrij(), () => false, (items) => {
+    const per = new Map(opslag.notities().map((n) => [n.id, n]))
+    for (const n of items) if (n.id) per.set(n.id, n)
+    opslag.zetNotities([...per.values()].sort((a, b) => (a.tijdstip < b.tijdstip ? 1 : -1)))
+  })
+
+  opslag.zetRepoSha(shas)
+  return erbij
 }

@@ -27,6 +27,7 @@ const K = {
   brief: 'sportlog.brief',
   bregje: 'sportlog.bregje',
   rapport: 'sportlog.rapport',
+  repoSha: 'sportlog.repoSha',
 }
 
 export interface Instellingen {
@@ -135,6 +136,10 @@ export const opslag = {
   /** Het ochtendrapport van /ochtendroutine (sinds 11 nov 2026). */
   rapport: () => lees<Rapport | null>(K.rapport, null),
   zetRapport: (r: Rapport) => schrijf(K.rapport, r),
+
+  /** Vingerafdruk (sha) per bestand in de repo, zodat bijhalen alleen ophaalt wat veranderde. */
+  repoSha: () => lees<Record<string, string>>(K.repoSha, {}),
+  zetRepoSha: (s: Record<string, string>) => schrijf(K.repoSha, s),
 }
 
 /** Herstelcijfers van een dag opslaan; retourneert de nieuwe verzameling. */
