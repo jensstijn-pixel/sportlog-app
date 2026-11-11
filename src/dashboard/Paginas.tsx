@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react'
 import type { Herstel, Taak } from '../types'
 import { Balk, Ic, Pijl, Spark, Staven, Vinkje } from './teken'
-import { eur, gem14, komma, korteDag, parseTraining, perDag, uurMin, type Model } from './model'
+import { eur, gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
 import { TijdGrafiek } from './TijdGrafiek'
+import { TrainingPagina } from './TrainingPagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -136,38 +137,6 @@ function HerstelPagina({ m, onInvul }: PaginaProps) {
       ) : <Leeg>Neem de cijfers over uit de Oura-app.</Leeg>}
       <p className="d-voetnoot">Oranje = de brief noemt het een signaal: HRV meer dan 10% lager, rusthartslag meer dan 5 hoger, meer dan een uur korter geslapen, readiness onder 70. Rood = temperatuur meer dan 0,5° hoger.</p>
       <div className="d-knoppen"><button type="button" className="d-knop" onClick={() => onInvul('herstel')}>{h ? 'Cijfers aanpassen' : 'Cijfers invullen'}</button></div>
-    </div>
-  )
-}
-
-function Training({ m, onNaar, onNotitie }: PaginaProps) {
-  const t = m.training.tekst ? parseTraining(m.training.tekst) : null
-  return (
-    <div className="d-pagina smal">
-      <Kop titel={t?.titel ? t.titel.split('—')[0].trim().toLowerCase().replace(/^./, (c) => c.toUpperCase()) : 'Training'}
-        sub={t ? t.titel?.split('—')[1]?.trim() : m.dag.rust ? `Vandaag rust · volgende: ${m.dag.volgende ?? 'onbekend'}` : 'Nog geen training in de brief'} />
-      {t ? (
-        <>
-          {!!t.algemeen.length && <Lijst>{t.algemeen.map((a, j) => <Rij key={j} l={<span style={{ fontSize: 14 }}>{a}</span>} />)}</Lijst>}
-          {t.oefeningen.map((o) => (
-            <div key={o.naam}>
-              <H2>{o.naam}</H2>
-              <div className="d-lijst">
-                <div className="d-sets" style={{ paddingTop: 14 }}>{o.sets.map((s, j) => <span key={j}>{s}</span>)}</div>
-                {!!o.noten.length && <ul className="d-noten">{o.noten.map((n, j) => <li key={j}>{n}</li>)}</ul>}
-              </div>
-            </div>
-          ))}
-        </>
-      ) : null}
-      <H2>Vorige keer</H2>
-      {m.training.vorige ? (
-        <Lijst><Rij l={m.training.vorige.kop} s={m.training.vorige.tekst.join(' ')} /></Lijst>
-      ) : <Leeg>Geen notitie gevonden.</Leeg>}
-      <div className="d-knoppen">
-        <button type="button" className="d-knop" onClick={onNotitie}>Notitie schrijven</button>
-        <button type="button" className="d-knop zacht" onClick={() => onNaar('logboek')}>Naar het logboek</button>
-      </div>
     </div>
   )
 }
@@ -395,6 +364,6 @@ function Meer({ onNaar, m }: PaginaProps) {
 }
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
-  herstel: HerstelPagina, training: Training, lichaam: Lichaam, taken: Taken,
+  herstel: HerstelPagina, training: TrainingPagina, lichaam: Lichaam, taken: Taken,
   zaak: Zaak, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }

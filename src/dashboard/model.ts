@@ -40,7 +40,8 @@ export function parseTraining(tekst: string) {
     if (!r || r.startsWith('TRAINING:') || /^[─═-]{4,}$/.test(r)) continue
     const kop = r.match(/^\d+\.\s+(.+)$/)
     if (kop) {
-      huidig = { naam: kop[1].replace(/\s*\(.*\)$/, ''), sets: [], noten: [] }
+      const kaal = kop[1].replace(/\s*\(.*\)$/, '').trim()
+      huidig = { naam: kaal === kaal.toUpperCase() ? kaal.charAt(0) + kaal.slice(1).toLowerCase() : kaal, sets: [], noten: [] }
       oefeningen.push(huidig)
       continue
     }
@@ -69,7 +70,13 @@ export interface Model {
   }
   gewicht: { nu: Gewicht | null; week: number | null; vorigeWeek: number | null; start: number | null; reeks: number[] }
   schermtijd: { netto: number | null; bruto: number | null; week: number | null; reeks: number[] }
-  training: { tekst: string | null; vorige: { kop: string; tekst: string[] } | null }
+  training: {
+    tekst: string | null
+    vorige: { kop: string; tekst: string[] } | null
+    volgende: { dagnaam: string; titel: string; tekst: string } | null
+    signalen: { soort: 'stagnatie' | 'pijn'; oefening: string | null; tekst: string }[]
+  }
+  dataset: Dataset | null
   taken: {
     gekozen: { taak: Taak; v?: Verrijking; ligt: number }[]
     overig: { taak: Taak; v?: Verrijking }[]
@@ -194,7 +201,10 @@ export function bouwModel(p: {
     training: {
       tekst: sectie(brief, 'training'),
       vorige: notRegels.length ? { kop: notRegels[0], tekst: notRegels.slice(1).map((r) => r.trim().replace(/^→\s*/, '')) } : null,
+      volgende: p.brief?.volgende ?? null,
+      signalen: p.brief?.trainingSignalen ?? [],
     },
+    dataset: p.dataset,
     taken: { gekozen, overig, cat: (t) => (p.verrijking[t.id] ? CATEGORIE_LABELS[p.verrijking[t.id].categorie] : 'Nieuw') },
     opWerk: (sectie(brief, 'voeding') ?? '').split('\n').filter((r) => r.startsWith('☐')).map((r) => r.replace(/^☐\s*/, '')),
     voorspel: sectie(brief, 'voorspel')?.split('\n')[0] ?? null,

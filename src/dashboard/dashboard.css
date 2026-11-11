@@ -186,3 +186,24 @@ button.d-w:active { transform: scale(.98); }
 .d-rij .waarde.d-goed { color: var(--green); }
 .d-rij .waarde.d-let { color: var(--orange); }
 .d-rij .waarde.d-slecht { color: var(--red); }
+
+/* ── Training (11 nov 2026) ── */
+.d-week { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; margin-top: 4px; }
+.d-weekdag { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 0; border-radius: 10px; }
+.d-weekdag small { font-size: 11px; color: var(--label2); font-variant-numeric: tabular-nums; }
+.d-weekdag span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--fill); color: transparent; }
+.d-weekdag span.gedaan { background: var(--green); color: #fff; }
+.d-weekdag.nu { background: color-mix(in srgb, var(--blue) 12%, transparent); }
+.d-weekdag.nu small { color: var(--blue); font-weight: 600; }
+@media (max-width: 480px) { .d-week { gap: 1px; } .d-weekdag span { width: 20px; height: 20px; font-size: 10px; } }
+.d-oefkaarten { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@container hoofd (max-width: 640px) { .d-oefkaarten { grid-template-columns: minmax(0, 1fr); } }
+.d-oefkaart { background: var(--card); border-radius: 14px; box-shadow: var(--schaduw); padding: 12px 14px 14px; text-align: left; color: var(--label); transition: transform 150ms var(--uit); }
+.d-oefkaart:active:not(:disabled) { transform: scale(.985); }
+.d-oefkaart .kop { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 15px; }
+.d-oefkaart .kop svg { color: var(--label3); }
+.d-oefkaart .d-sets span { font-size: 12.5px; }
+.d-signaallijst { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.4; }
+.d-badge { display: inline-block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 2px 7px; border-radius: 6px; margin-right: 8px; background: color-mix(in srgb, var(--orange) 16%, transparent); color: var(--orange); vertical-align: 1px; }
+.d-badge.rood { background: color-mix(in srgb, var(--red) 14%, transparent); color: var(--red); }
+button.d-rij:disabled { opacity: .5; cursor: default; }

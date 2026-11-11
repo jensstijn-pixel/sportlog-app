@@ -288,6 +288,10 @@ export interface Dataset {
   /** Sinds 25 sep 2026: uitgaven en inkomen per week (maandag = datum) uit het
    *  ABN-afschrift, in centen. Alleen volledige weken. */
   geld_weken?: { datum: string; uit: number; in: number }[]
+  /** Sinds 11 nov 2026: korte reflectie per oefening (laatste 8 weken), door tracking.py. */
+  oefening_reflectie?: Record<string, { tekst: string; pct: number | null }>
+  /** Sinds 11 nov 2026: welke oefeningen er nu per trainingsdag in het schema staan. */
+  schema_dagen?: Record<string, { titel: string; oefeningen: string[] }>
 }
 
 /** Een geldpost: een uitgave of een inkomst, met jouw eigen uitleg erbij.
@@ -345,4 +349,8 @@ export interface Dagbrief {
   /** Volledige titel van de training ("Full Body A"), of null op een rustdag. */
   dagtitel?: string | null
   secties: BriefSectie[]
+  /** Sinds 11 nov 2026, op een rustdag: het voorstel voor de volgende training (platte tekst). */
+  volgende?: { dagnaam: string; titel: string; tekst: string } | null
+  /** Sinds 11 nov 2026: stagnatie (voor de training van vandaag of de volgende) en pijnmeldingen. */
+  trainingSignalen?: { soort: 'stagnatie' | 'pijn'; oefening: string | null; tekst: string }[]
 }
