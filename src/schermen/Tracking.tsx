@@ -1,10 +1,8 @@
 import { useMemo, useState } from 'react'
-import type { Dataset, Gewicht, Weekoverzicht } from '../types'
-import { gewichtGemiddelden } from '../types'
+import type { Dataset, Weekoverzicht } from '../types'
 import Grafiek, { type Punt } from '../onderdelen/Grafiek'
 import { AiKaart, Kaart, KeuzeChips, PaginaKop, Sectiekop, TabBalk } from '../onderdelen/ui'
 import { euro } from '../lib/geld'
-import { vandaagISO } from '../lib/datum'
 
 /** Wat er over tijd gebeurt: gewicht, herstel, schermtijd en geld.
  *
@@ -19,12 +17,10 @@ type Periode = '30' | '90' | 'alles'
 
 export default function Tracking({
   dataset,
-  gewicht,
   weekoverzicht,
   onTab,
 }: {
   dataset: Dataset | null
-  gewicht: Record<string, Gewicht>
   weekoverzicht?: Weekoverzicht
   onTab: (tab: 'vandaag' | 'logboek') => void
 }) {
@@ -52,19 +48,6 @@ export default function Tracking({
     ? Math.round(geldWeken.reduce((s, w) => s + w.uit, 0) / geldWeken.length)
     : 0
 
-  /** Gewicht komt rechtstreeks uit de app, niet via de Mac: dan staat de
-   *  meting van vanochtend er meteen in. */
-  const gewichtPunten = useMemo<Punt[]>(
-    () =>
-      Object.values(gewicht)
-        .filter((g) => g.datum >= grens)
-        .sort((a, b) => (a.datum < b.datum ? -1 : 1))
-        .map((g) => ({ datum: g.datum, waarde: g.kg })),
-    [gewicht, grens],
-  )
-  const { deze: gemDeze, vorige: gemVorige } = gewichtGemiddelden(gewicht, vandaagISO())
-  const kg = (n: number) => n.toFixed(1).replace('.', ',')
-
   const samenhang = dataset?.samenhang
   const dagenMetData = dataset?.herstel?.length ?? 0
 
@@ -91,25 +74,7 @@ export default function Tracking({
         />
       </div>
 
-      <Sectiekop className="mt-6">Gewicht</Sectiekop>
-      <div className="mt-2.5 grid grid-cols-1 gap-2.5">
-        <Grafiek titel="Ochtendgewicht" punten={gewichtPunten} eenheid="kg" formatteer={kg} hoogGoed={false} trend />
-        <Kaart className="flex items-baseline justify-between px-4 py-3.5">
-          <span className="text-[15px] font-semibold">Gemiddeld afgelopen 7 dagen</span>
-          <span className="text-right">
-            <span className="text-[20px] font-bold tabular-nums">{gemDeze != null ? `${kg(gemDeze)} kg` : '–'}</span>
-            {gemDeze != null && gemVorige != null && (
-              <span className="block text-[12px] text-vaag">
-                {gemDeze - gemVorige <= 0 ? '−' : '+'}
-                {kg(Math.abs(gemDeze - gemVorige))} kg t.o.v. week ervoor
-              </span>
-            )}
-          </span>
-        </Kaart>
-      </div>
-
-      {/* Herstel staat sinds 11 nov 2026 op de pagina Herstel van het dashboard (grafiek per dag,
-          met 7-daags gemiddelde). Hier blijft alleen de samenhang met je training. */}
+      {/* Gewicht staat sinds 11 nov 2026 op de eigen pagina Gewicht (grafiek per dag, tempo van de cut). */}
 
       <Sectiekop className="mt-6">Geld</Sectiekop>
       <div className="mt-2.5 grid grid-cols-1 gap-2.5">

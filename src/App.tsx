@@ -282,7 +282,6 @@ export default function App() {
           <Tracking
             key={afgeleid}
             dataset={opslag.dataset()}
-            gewicht={gewicht}
             weekoverzicht={huidigWeekoverzicht()}
             onTab={() => {}}
           />

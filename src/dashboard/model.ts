@@ -68,8 +68,8 @@ export interface Model {
     duiding: string | null
     samenvatting: string | null
   }
-  gewicht: { nu: Gewicht | null; week: number | null; vorigeWeek: number | null; start: number | null; reeks: number[] }
-  schermtijd: { netto: number | null; bruto: number | null; week: number | null; reeks: number[] }
+  gewicht: { nu: Gewicht | null; week: number | null; vorigeWeek: number | null; start: number | null; reeks: number[]; alles: Record<string, Gewicht> }
+  schermtijd: { netto: number | null; bruto: number | null; week: number | null; reeks: number[]; alles: Record<string, Schermtijd> }
   training: {
     tekst: string | null
     vorige: { kop: string; tekst: string[] } | null
@@ -191,12 +191,14 @@ export function bouwModel(p: {
       vorigeWeek: gGem.vorige,
       start: startMeting?.kg ?? null,
       reeks: gewichtLijst.slice(-14).map((g) => g.kg),
+      alles: p.gewicht,
     },
     schermtijd: {
       netto: nettoSchermtijd(stGisteren),
       bruto: stGisteren?.totaalMinuten ?? null,
       week: gem(netto.slice(-7)),
       reeks: netto.slice(-8),
+      alles: p.schermtijd,
     },
     training: {
       tekst: sectie(brief, 'training'),
@@ -236,4 +238,53 @@ export function perDag<T extends { datum: string }>(rijen: T[], dagen: number, w
 export function gem14<T extends { datum: string }>(rijen: T[], waarde: (r: T) => number | null) {
   const xs = perDag(rijen, 15, waarde).slice(0, 14).map((p) => p.waarde).filter((v): v is number => v != null)
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null
+}
+
+/** Doelen van Jens (11 nov 2026). */
+export const DOEL_TEMPO = { min: 0.5, max: 0.8 } // kg per week eraf, tijdens de cut
+export const MAX_SCHERMTIJD = 210 // minuten netto per dag (3,5 uur)
+
+const isoMin = (iso: string, dagen: number) => {
+  const d = new Date(`${iso}T12:00:00`)
+  d.setDate(d.getDate() - dagen)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** Tempo van de cut, op weekgemiddelden (één weging schommelt te veel).
+ *  Negatief = afvallen. Null als er te weinig metingen zijn. */
+export function cutTempo(alles: Record<string, Gewicht>, vandaag: string) {
+  const startEind = isoMin(CUT_START, -6) // eerste cutweek: 29 sep t/m 5 okt
+  const start = gewichtGemiddelden(alles, startEind).deze
+  const nu = gewichtGemiddelden(alles, vandaag).deze
+  const vierTerug = gewichtGemiddelden(alles, isoMin(vandaag, 28)).deze
+  const weken = (new Date(`${vandaag}T12:00:00`).getTime() - new Date(`${startEind}T12:00:00`).getTime()) / (7 * 86400000)
+  const sinds = start != null && nu != null && weken > 0 ? (nu - start) / weken : null
+  const recent = vierTerug != null && nu != null ? (nu - vierTerug) / 4 : null
+  const oordeel = (t: number | null) =>
+    t == null ? null : -t < DOEL_TEMPO.min ? 'langzamer' : -t > DOEL_TEMPO.max ? 'sneller' : 'op schema'
+  return {
+    start, nu, weken, sinds, recent,
+    oordeelSinds: oordeel(sinds), oordeelRecent: oordeel(recent),
+    over4: nu != null ? { hoog: nu - 4 * DOEL_TEMPO.min, laag: nu - 4 * DOEL_TEMPO.max } : null,
+  }
+}
+
+/** Gemiddelde netto schermtijd per week (ma–zo), oud → nieuw. */
+export function schermtijdPerWeek(alles: Record<string, Schermtijd>, weken: number) {
+  const uit: { maandag: string; gem: number | null; dagen: number }[] = []
+  const d = new Date()
+  d.setHours(12, 0, 0, 0)
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7)) // maandag van deze week
+  for (let w = weken - 1; w >= 0; w--) {
+    const ma = new Date(d)
+    ma.setDate(d.getDate() - w * 7)
+    const maIso = `${ma.getFullYear()}-${String(ma.getMonth() + 1).padStart(2, '0')}-${String(ma.getDate()).padStart(2, '0')}`
+    const xs: number[] = []
+    for (let i = 0; i < 7; i++) {
+      const n = nettoSchermtijd(alles[isoMin(maIso, -i)])
+      if (n != null) xs.push(n)
+    }
+    uit.push({ maandag: maIso, gem: xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null, dagen: xs.length })
+  }
+  return uit
 }

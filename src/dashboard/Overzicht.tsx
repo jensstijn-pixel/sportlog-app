@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import type { Taak } from '../types'
 import { Balk, Pijl, Ring, Spark, Staven, VinkIcoon, Vinkje } from './teken'
-import { eur, komma, korteDag, perDag, uurMin, type Model } from './model'
+import { MAX_SCHERMTIJD, cutTempo, eur, komma, korteDag, perDag, uurMin, type Model } from './model'
 import type { Pagina } from './Schil'
 
 export type Invul = 'herstel' | 'gewicht' | 'schermtijd'
@@ -59,7 +59,8 @@ export function Overzicht({
   const herstelKleur = h?.readiness == null ? 'var(--label3)' : h.readiness >= 85 ? 'var(--green)' : h.readiness >= 70 ? 'var(--orange)' : 'var(--red)'
   const slaap = h?.slaapMinuten != null ? uurMin(h.slaapMinuten) : null
   const st = m.schermtijd.netto != null ? uurMin(m.schermtijd.netto) : null
-  const stDelta = m.schermtijd.netto != null && m.schermtijd.week != null ? Math.round(m.schermtijd.netto - m.schermtijd.week) : null
+  const stOver = m.schermtijd.netto != null ? Math.round(m.schermtijd.netto - MAX_SCHERMTIJD) : null
+  const tempo = cutTempo(m.gewicht.alles, m.vandaag)
 
   const sluitVan = (afd: string) => (afd === 'keuken' ? bv?.sluit.keuken : bv?.sluit.bediening) ?? '22:00'
   const gantt = (van: string, tot: string) => {
@@ -165,7 +166,7 @@ export function Overzicht({
           <Staven waarden={perDag(m.herstel.alle, 14, (x) => x.slaapMinuten).map((p) => p.waarde)} h={30} kleur="var(--indigo)" />
         </Tegel>
 
-        <Tegel maat="s" onNaar={onNaar} naar="lichaam" i={i++}>
+        <Tegel maat="s" onNaar={onNaar} naar="gewicht" i={i++}>
           <Kop kleur="var(--purple)" naam="Gewicht" rechts={m.gewicht.nu?.datum === m.vandaag ? 'vanochtend' : m.gewicht.nu ? korteDag(m.gewicht.nu.datum) : undefined} />
           {m.gewicht.nu ? (
             <>
@@ -174,17 +175,22 @@ export function Overzicht({
                 {m.gewicht.week != null ? `week ${komma(m.gewicht.week)}` : 'week: te weinig metingen'}
                 {m.gewicht.start != null ? ` · cut ${m.gewicht.nu.kg <= m.gewicht.start ? '−' : '+'}${komma(Math.abs(m.gewicht.start - m.gewicht.nu.kg))}` : ''}
               </div>
+              {tempo.recent != null && (
+                <div className={`d-onder ${tempo.oordeelRecent === 'op schema' ? 'd-goed' : 'd-let'}`}>
+                  {tempo.recent <= 0 ? '−' : '+'}{komma(Math.abs(tempo.recent), 2)} kg/week · {tempo.oordeelRecent}
+                </div>
+              )}
             </>
           ) : <p className="d-leeg">Nog geen meting.</p>}
-          <Spark waarden={m.gewicht.reeks} h={28} kleur="var(--purple)" />
+          <Spark waarden={m.gewicht.reeks} h={24} kleur="var(--purple)" />
         </Tegel>
 
-        <Tegel maat="s" onNaar={onNaar} naar="lichaam" i={i++}>
+        <Tegel maat="s" onNaar={onNaar} naar="schermtijd" i={i++}>
           <Kop kleur="var(--blue)" naam="Schermtijd" rechts="gisteren" />
           {st ? (
             <>
               <div className="d-groot">{st.u}<small>u</small> {st.m}<small>m</small></div>
-              {stDelta != null && <div className={`d-onder ${stDelta > 30 ? 'd-let' : stDelta < -30 ? 'd-goed' : ''}`}>{stDelta >= 0 ? '+' : '−'}{Math.abs(stDelta)} min t.o.v. week</div>}
+              {stOver != null && <div className={`d-onder ${stOver > 0 ? 'd-let' : 'd-goed'}`}>{stOver > 0 ? `${stOver} min boven je max` : `${-stOver} min onder je max`}</div>}
             </>
           ) : <p className="d-leeg">Nog niet ingevuld.</p>}
           <Staven waarden={m.schermtijd.reeks} h={26} kleur="var(--blue)" />

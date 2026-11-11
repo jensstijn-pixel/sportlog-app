@@ -7,7 +7,7 @@ export interface Punt { datum: string; waarde: number | null }
  *  Gestippeld = je gemiddelde (zelfde maatstaf als de brief), dikke zachte lijn = 7-daags gemiddelde.
  *  Aanraken of muis eroverheen toont de waarde van die dag. */
 export function TijdGrafiek({
-  punten, kleur, gem, formatteer = (n) => String(Math.round(n)), soort = 'lijn', h = 170,
+  punten, kleur, gem, formatteer = (n) => String(Math.round(n)), soort = 'lijn', h = 170, doel, kleurVoor, tipExtra,
 }: {
   punten: Punt[]
   kleur: string
@@ -15,6 +15,12 @@ export function TijdGrafiek({
   formatteer?: (n: number) => string
   soort?: 'lijn' | 'staaf'
   h?: number
+  /** Een doel- of maximumlijn, bijvoorbeeld "max" bij schermtijd. */
+  doel?: { waarde: number; label: string } | null
+  /** Kleur per staaf (bijv. oranje boven je max). */
+  kleurVoor?: (v: number) => string
+  /** Extra tekst bij aanraken, bijv. de weegschaal. */
+  tipExtra?: (datum: string) => string | undefined
 }) {
   const doos = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(600)
@@ -31,8 +37,8 @@ export function TijdGrafiek({
   if (!waarden.length) return <div ref={doos} className="d-tg-leeg">Nog geen metingen in deze periode.</div>
 
   const links = 6, rechts = 44, boven = 22, onder = 22
-  const lo0 = Math.min(...waarden, gem ?? Infinity)
-  const hi0 = Math.max(...waarden, gem ?? -Infinity)
+  const lo0 = Math.min(...waarden, gem ?? Infinity, doel?.waarde ?? Infinity)
+  const hi0 = Math.max(...waarden, gem ?? -Infinity, doel?.waarde ?? -Infinity)
   const marge = (hi0 - lo0) * 0.12 || 1
   const lo = soort === 'staaf' ? 0 : lo0 - marge
   const hi = hi0 + marge
@@ -83,11 +89,17 @@ export function TijdGrafiek({
             <text x={w - rechts + 6} y={y(gem)} dominantBaseline="central" className="d-tg-as">gem.</text>
           </g>
         )}
+        {doel && (
+          <g>
+            <line x1={links} x2={w - rechts} y1={y(doel.waarde)} y2={y(doel.waarde)} stroke="var(--red)" strokeOpacity=".7" strokeDasharray="6 4" />
+            <text x={w - rechts + 6} y={y(doel.waarde)} dominantBaseline="central" className="d-tg-as" style={{ fill: 'var(--red)' }}>{doel.label}</text>
+          </g>
+        )}
         {soort === 'staaf'
           ? punten.map((p, i) => (p.waarde == null
             ? <rect key={i} x={x(i) - staafB / 2} y={h - onder - 3} width={staafB} height={3} rx={1.5} fill="var(--fill)" />
             : <rect key={i} x={x(i) - staafB / 2} y={y(p.waarde)} width={staafB} height={Math.max(2, y(lo) - y(p.waarde))} rx={Math.min(4, staafB / 2)}
-                fill={kleur} opacity={actief == null || actief === i ? 1 : 0.35} />))
+                fill={kleurVoor ? kleurVoor(p.waarde) : kleur} opacity={actief == null || actief === i ? 1 : 0.35} />))
           : (
             <>
               {trendPad && <path d={trendPad} fill="none" stroke={kleur} strokeOpacity=".22" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />}
@@ -113,6 +125,7 @@ export function TijdGrafiek({
       {a && actief != null && (
         <div className="d-tg-tip" style={{ left: Math.min(Math.max(x(actief), 60), w - 60) }}>
           <b>{a.waarde == null ? 'niet ingevuld' : formatteer(a.waarde)}</b> {korteDag(a.datum)}
+          {a.waarde != null && tipExtra?.(a.datum) ? ` · ${tipExtra(a.datum)}` : ''}
         </div>
       )}
     </div>

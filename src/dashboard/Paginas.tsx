@@ -4,6 +4,7 @@ import { Balk, Ic, Pijl, Spark, Staven, Vinkje } from './teken'
 import { eur, gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
 import { TijdGrafiek } from './TijdGrafiek'
 import { TrainingPagina } from './TrainingPagina'
+import { GewichtPagina, SchermtijdPagina } from './LichaamPaginas'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -137,35 +138,6 @@ function HerstelPagina({ m, onInvul }: PaginaProps) {
       ) : <Leeg>Neem de cijfers over uit de Oura-app.</Leeg>}
       <p className="d-voetnoot">Oranje = de brief noemt het een signaal: HRV meer dan 10% lager, rusthartslag meer dan 5 hoger, meer dan een uur korter geslapen, readiness onder 70. Rood = temperatuur meer dan 0,5° hoger.</p>
       <div className="d-knoppen"><button type="button" className="d-knop" onClick={() => onInvul('herstel')}>{h ? 'Cijfers aanpassen' : 'Cijfers invullen'}</button></div>
-    </div>
-  )
-}
-
-function Lichaam({ m, onInvul }: PaginaProps) {
-  const g = m.gewicht
-  return (
-    <div className="d-pagina">
-      <Kop titel="Gewicht & schermtijd" sub="Vanochtend en gisteren" />
-      <div className="d-twee">
-        <div>
-          <H2>Gewicht</H2>
-          <div className="d-lijst d-grafiek">
-            <div className="kop"><b className="d-num">{g.nu ? komma(g.nu.kg) : '–'}<small>kg</small></b><span>{g.week != null ? `week ${komma(g.week)}` : ''}{g.vorigeWeek != null ? ` · vorige ${komma(g.vorigeWeek)}` : ''}</span></div>
-            <Spark waarden={g.reeks} h={80} kleur="var(--purple)" />
-          </div>
-          {g.start != null && g.nu && <p className="d-voetnoot">Sinds de start van de cut (29 sep): {komma(g.start)} → {komma(g.nu.kg)} kg.</p>}
-          <div className="d-knoppen"><button type="button" className="d-knop" onClick={() => onInvul('gewicht')}>Gewicht invullen</button></div>
-        </div>
-        <div>
-          <H2>Schermtijd</H2>
-          <div className="d-lijst d-grafiek">
-            <div className="kop"><b className="d-num">{m.schermtijd.netto != null ? hm(m.schermtijd.netto) : '–'}<small>netto</small></b><span>{m.schermtijd.week != null ? `week ${hm(m.schermtijd.week)}` : ''}</span></div>
-            <Staven waarden={m.schermtijd.reeks} h={80} kleur="var(--blue)" />
-          </div>
-          {m.schermtijd.bruto != null && m.schermtijd.netto != null && <p className="d-voetnoot">Van {hm(m.schermtijd.bruto)} bruto, {hm(m.schermtijd.bruto - m.schermtijd.netto)} eraf (Flitsmeister).</p>}
-          <div className="d-knoppen"><button type="button" className="d-knop" onClick={() => onInvul('schermtijd')}>Schermtijd invullen</button></div>
-        </div>
-      </div>
     </div>
   )
 }
@@ -364,6 +336,6 @@ function Meer({ onNaar, m }: PaginaProps) {
 }
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
-  herstel: HerstelPagina, training: TrainingPagina, lichaam: Lichaam, taken: Taken,
+  herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: Taken,
   zaak: Zaak, omzet: Omzet, mail: Mail, meppie: Meppie, geld: Geld, brief: Brief, meer: Meer,
 }

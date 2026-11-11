@@ -3,14 +3,15 @@ import { Ic, glyph, type GlyphNaam } from './teken'
 import './dashboard.css'
 
 export type Pagina =
-  | 'overzicht' | 'herstel' | 'training' | 'lichaam' | 'taken' | 'logboek' | 'tracking'
+  | 'overzicht' | 'herstel' | 'training' | 'gewicht' | 'schermtijd' | 'taken' | 'logboek' | 'tracking'
   | 'zaak' | 'omzet' | 'mail' | 'meppie' | 'geld' | 'brief' | 'meer' | 'instellingen'
 
 export const NAV: { p: Pagina; naam: string; g: GlyphNaam; kleur: string; groep: string | null }[] = [
   { p: 'overzicht', naam: 'Overzicht', g: 'overzicht', kleur: 'var(--blue)', groep: null },
   { p: 'herstel', naam: 'Herstel', g: 'hart', kleur: 'var(--orange)', groep: 'Persoonlijk' },
   { p: 'training', naam: 'Training', g: 'halter', kleur: 'var(--green)', groep: 'Persoonlijk' },
-  { p: 'lichaam', naam: 'Gewicht & schermtijd', g: 'weegschaal', kleur: 'var(--purple)', groep: 'Persoonlijk' },
+  { p: 'gewicht', naam: 'Gewicht', g: 'weegschaal', kleur: 'var(--purple)', groep: 'Persoonlijk' },
+  { p: 'schermtijd', naam: 'Schermtijd', g: 'klok', kleur: 'var(--blue)', groep: 'Persoonlijk' },
   { p: 'taken', naam: 'Taken', g: 'lijst', kleur: 'var(--blue)', groep: 'Persoonlijk' },
   { p: 'logboek', naam: 'Logboek', g: 'boek', kleur: 'var(--indigo)', groep: 'Persoonlijk' },
   { p: 'tracking', naam: 'Tracking', g: 'lijn', kleur: 'var(--teal)', groep: 'Persoonlijk' },
