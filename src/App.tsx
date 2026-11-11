@@ -211,6 +211,7 @@ export default function App() {
     bregje: opslag.bregje(),
     rapport: opslag.rapport(),
     notities,
+    geldWeek: opslag.geldWeek(),
   })
   const invullen = (i: Invul) => setScherm({ naam: i })
   const nieuweNotitie = () => { setNieuweNotitieOpen(true); naar('logboek') }

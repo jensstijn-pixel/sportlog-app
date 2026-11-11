@@ -1,8 +1,8 @@
 import { useState, type ReactNode } from 'react'
 import type { Herstel, Taak } from '../types'
 import type { MeppieMelding } from './typen'
-import { Ic, Pijl, Staven, Vinkje } from './teken'
-import { eur, gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
+import { Ic, Pijl, Vinkje } from './teken'
+import { gem14, komma, korteDag, perDag, uurMin, type Model } from './model'
 import { TijdGrafiek } from './TijdGrafiek'
 import { TrainingPagina } from './TrainingPagina'
 import { GewichtPagina, SchermtijdPagina } from './LichaamPaginas'
@@ -12,6 +12,7 @@ import { ZaakPagina } from './ZaakPagina'
 import { OmzetPagina } from './OmzetPagina'
 import { MailPagina } from './MailPagina'
 import { MeppiePagina } from './MeppiePagina'
+import { GeldPagina } from './GeldPagina'
 import { NAV, type Pagina } from './Schil'
 import { useActiesKlaar, type Invul } from './Overzicht'
 
@@ -157,26 +158,6 @@ function HerstelPagina({ m, onInvul }: PaginaProps) {
 // ── Bregje ──
 
 // ── Week ──
-function Geld({ m }: PaginaProps) {
-  const l = m.geld.laatste
-  return (
-    <div className="d-pagina smal">
-      <Kop titel="Geld & uren" sub={l ? `Week van ${korteDag(l.datum)} · uit het ABN-afschrift` : 'Nog geen afschrift verwerkt'} />
-      {l && (
-        <div className="d-lijst d-grafiek">
-          <div className="kop"><b className="d-num">{eur(l.uit)}<small>uit</small></b><span>{m.geld.gem != null ? `gem. week ${eur(m.geld.gem)}` : ''}</span></div>
-          <Staven waarden={m.geld.weken.slice(-12).map((w) => w.uit)} h={90} kleur="var(--green)" />
-        </div>
-      )}
-      {l && <p className="d-voetnoot">Laatste 12 weken. Ingekomen in de laatste week: {eur(l.in)}.</p>}
-      <H2>Weekreflectie</H2>
-      {m.geld.tekst ? <div className="d-tekstblok">{m.geld.tekst.trim()}</div> : <Leeg>Komt op maandag, met het nieuwe afschrift.</Leeg>}
-      <H2>Uren</H2>
-      {m.geld.uren ? <div className="d-tekstblok">{m.geld.uren.trim()}</div> : <Leeg>Komt op maandag, met je urenrapport.</Leeg>}
-    </div>
-  )
-}
-
 function Brief({ m }: PaginaProps) {
   const b = m.brief
   return (
@@ -210,5 +191,5 @@ function Meer({ onNaar, m }: PaginaProps) {
 
 export const PAGINAS: Partial<Record<Pagina, (p: PaginaProps) => ReactNode>> = {
   herstel: HerstelPagina, training: TrainingPagina, gewicht: GewichtPagina, schermtijd: SchermtijdPagina, taken: TakenPagina, trends: TrendsPagina,
-  zaak: ZaakPagina, omzet: OmzetPagina, mail: MailPagina, meppie: MeppiePagina, geld: Geld, brief: Brief, meer: Meer,
+  zaak: ZaakPagina, omzet: OmzetPagina, mail: MailPagina, meppie: MeppiePagina, geld: GeldPagina, brief: Brief, meer: Meer,
 }

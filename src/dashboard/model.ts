@@ -1,7 +1,7 @@
 import type { Dagbrief, Dataset, Gewicht, Herstel, Schermtijd, Taak, Verrijking } from '../types'
 import { CATEGORIE_LABELS, gewichtGemiddelden, nettoSchermtijd } from '../types'
 import { gisterenISO, vandaagISO } from '../lib/datum'
-import type { Bregje, Rapport } from './typen'
+import type { Bregje, GeldWeek, Rapport } from './typen'
 
 /** Alles wat het dashboard toont, afgeleid uit wat de app al heeft. Geen eigen rekenregels:
  *  waar de Mac al een oordeel gaf (brief, omzet-export, rapport) nemen we dat over. */
@@ -91,6 +91,7 @@ export interface Model {
   geld: { weken: { datum: string; uit: number; in: number }[]; laatste: { datum: string; uit: number; in: number } | null; gem: number | null; tekst: string | null; uren: string | null }
   bregje: Bregje | null
   rapport: Rapport | null
+  geldWeek: GeldWeek | null
   rapportVanVandaag: boolean
   brief: Dagbrief | null
 }
@@ -106,6 +107,7 @@ export function bouwModel(p: {
   bregje: Bregje | null
   rapport: Rapport | null
   notities?: { datum: string; energie: number }[]
+  geldWeek?: GeldWeek | null
 }): Model {
   const vandaag = vandaagISO()
   const gisteren = gisterenISO()
@@ -230,6 +232,7 @@ export function bouwModel(p: {
     geld: { weken, laatste, gem: gemUit, tekst: sectie(brief, 'financien'), uren: sectie(brief, 'uren') },
     bregje: p.bregje,
     rapport: p.rapport,
+    geldWeek: p.geldWeek ?? null,
     rapportVanVandaag: p.rapport?.datum === vandaag,
     brief: p.brief,
   }

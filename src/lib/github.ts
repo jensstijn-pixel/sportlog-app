@@ -1,6 +1,6 @@
 import type { Dagbrief, Dataset, FinancienDuiding, Gewicht, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
 import { nuISO, weekJaar, weeknummer } from './datum'
-import type { Bregje, MeppieMelding, Rapport } from '../dashboard/typen'
+import type { Bregje, GeldWeek, MeppieMelding, Rapport } from '../dashboard/typen'
 import { opslag, type Instellingen } from './opslag'
 
 /** Dunne laag over de GitHub Contents API. De privé data-repo is puur transport
@@ -345,7 +345,7 @@ export async function haalTerug(): Promise<void> {
   const nu = new Date()
   const sleutel = `${weekJaar(nu)}-${String(weeknummer(nu)).padStart(2, '0')}`
 
-  const [signalen, overzicht, vraag, verrijking, dataset, duiding, brief, bregje, rapport] = await Promise.all([
+  const [signalen, overzicht, vraag, verrijking, dataset, duiding, brief, bregje, rapport, geldWeek] = await Promise.all([
     leesJson<Record<string, Signaal>>(inst, 'signalen/laatste.json').catch(() => null),
     leesJson<Weekoverzicht>(inst, `overzicht/week-${sleutel}.json`).catch(() => null),
     leesJson<OpenVraag>(inst, 'vraag/open.json').catch(() => null),
@@ -355,6 +355,7 @@ export async function haalTerug(): Promise<void> {
     leesJson<Dagbrief>(inst, 'brief/vandaag.json').catch(() => null),
     leesJson<Bregje>(inst, 'bregje/vandaag.json').catch(() => null),
     leesJson<Rapport>(inst, 'rapport/vandaag.json').catch(() => null),
+    leesJson<GeldWeek>(inst, 'geld/week.json').catch(() => null),
   ])
 
   if (signalen) opslag.zetSignalen(signalen)
@@ -365,6 +366,7 @@ export async function haalTerug(): Promise<void> {
   if (brief) opslag.zetBrief(brief)
   if (bregje) opslag.zetBregje(bregje)
   if (rapport) opslag.zetRapport(rapport)
+  if (geldWeek) opslag.zetGeldWeek(geldWeek)
   opslag.zetVraag(vraag)
 }
 

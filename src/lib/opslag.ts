@@ -1,5 +1,5 @@
 import type { Dagbrief, Dataset, FinancienDuiding, Gewicht, Herstel, Notitie, OpenVraag, Post, Schermtijd, Signaal, Taak, Verrijking, Weekoverzicht } from '../types'
-import type { Bregje, MeppieMelding, Rapport } from '../dashboard/typen'
+import type { Bregje, GeldWeek, MeppieMelding, Rapport } from '../dashboard/typen'
 
 /** localStorage is de bron van waarheid op de telefoon: de app werkt volledig
  *  offline. GitHub is puur transport naar de Mac (zie lib/github.ts). */
@@ -30,6 +30,7 @@ const K = {
   repoSha: 'sportlog.repoSha',
   meppie: 'sportlog.meppie',
   meppieWachtrij: 'sportlog.meppieWachtrij',
+  geldWeek: 'sportlog.geldWeek',
 }
 
 export interface Instellingen {
@@ -148,6 +149,10 @@ export const opslag = {
   zetMeppie: (m: MeppieMelding[]) => schrijf(K.meppie, m),
   meppieWachtrij: () => lees<string[]>(K.meppieWachtrij, []),
   zetMeppieWachtrij: (ids: string[]) => schrijf(K.meppieWachtrij, ids),
+
+  /** Geld en uren van de laatste week (sinds 11 nov 2026). */
+  geldWeek: () => lees<GeldWeek | null>(K.geldWeek, null),
+  zetGeldWeek: (g: GeldWeek) => schrijf(K.geldWeek, g),
 }
 
 /** Een Meppie-melding bewaren en in de wachtrij zetten. */

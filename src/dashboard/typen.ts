@@ -110,3 +110,25 @@ export interface Groep {
   naam: string; datum: string; tijd: string | null; aantal: number | null
   status: string; menu: string; pdf: boolean; drank: string | null; bijzonder: string | null; open: string[]; bijgewerkt?: string
 }
+
+/** Geld en uren voor de hele week (Daily-app scripts/geld_naar_app.py → geld/week.json), bedragen in euro. */
+export interface GeldWeek {
+  gemaakt: string
+  week: { van: string; tot: string }
+  compleet: boolean
+  looptTot: string
+  uit: number
+  in: number
+  gem: number
+  categorieen: { naam: string; uit: number; keer: number; gem: number }[]
+  inkomsten: { naam: string; bedrag: number; keer: number }[]
+  grootste: { tegenpartij: string; bedrag: number; categorie: string; datum: string }[]
+  duurder: { tegenpartij: string; van: number; naar: number }[]
+  gewoontes: { fastfood: { keer: number; bedrag: number; gem: number }; ah: { keer: number; bedrag: number; gem: number } }
+  gewoontesReeks: { maandag: string; fastfood: number; ah: number }[]
+  potjes: { netto: number; belegd: number; revolut: number }
+  pot: { maand: string; op: number; budget: number; terug: number; tot: string; dagenVoorbij: number; dagenInMaand: number } | null
+  maanden: { maand: string; in: number; uit: number; potjes: number; uitEten: number; fastfood: number; compleet: boolean }[]
+  reflectie: string | null
+  uren: { van: string; tot: string; bregje: number | null; bedrijf: number | null; perProject: [string, number][] }[]
+}
