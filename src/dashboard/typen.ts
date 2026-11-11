@@ -127,7 +127,7 @@ export interface GeldWeek {
   gewoontes: { fastfood: { keer: number; bedrag: number; gem: number }; ah: { keer: number; bedrag: number; gem: number } }
   gewoontesReeks: { maandag: string; fastfood: number; ah: number }[]
   potjes: { netto: number; belegd: number; revolut: number }
-  pot: { maand: string; op: number; budget: number; terug: number; tot: string; dagenVoorbij: number; dagenInMaand: number } | null
+  pot: { maand: string; op: number; budget: number; terug: number; tot: string; dagenVoorbij: number; dagenInMaand: number; stand?: { op: string; over: number; erna: number } | null } | null
   maanden: { maand: string; in: number; uit: number; potjes: number; uitEten: number; fastfood: number; compleet: boolean }[]
   reflectie: string | null
   uren: { van: string; tot: string; bregje: number | null; bedrijf: number | null; perProject: [string, number][] }[]

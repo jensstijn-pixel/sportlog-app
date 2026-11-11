@@ -11,7 +11,7 @@ const u = (n: number | null) => (n == null ? '–' : `${komma(n, n % 1 ? 1 : 0)}
 
 export function GeldPagina({ m }: PaginaProps) {
   const g = m.geldWeek
-  const [maandMaat, setMaandMaat] = useState<'uit' | 'eten'>('uit')
+  const [maandMaat, setMaandMaat] = useState<'inuit' | 'eten'>('inuit')
   if (!g) {
     return (
       <div className="d-pagina smal">
@@ -29,7 +29,7 @@ export function GeldPagina({ m }: PaginaProps) {
   const urenMax = Math.max(1, ...g.uren.map((w) => (w.bregje ?? 0) + (w.bedrijf ?? 0)))
   const laatsteUren = g.uren.at(-1)
   const maanden = g.maanden.slice(-12)
-  const maandMax = Math.max(1, ...maanden.map((x) => (maandMaat === 'uit' ? x.uit : x.uitEten + x.fastfood)))
+  const maandMax = Math.max(1, ...maanden.map((x) => (maandMaat === 'inuit' ? Math.max(x.in, x.uit) : x.uitEten + x.fastfood)))
 
   return (
     <div className="d-pagina">
@@ -85,7 +85,9 @@ export function GeldPagina({ m }: PaginaProps) {
               <div className="d-lijst d-grafiek">
                 <div className="kop"><b className="d-num" style={{ fontSize: 24 }}>{eur(pot.op)}<small>van {eur(pot.budget)}</small></b><span className={potKoers === 'op koers' ? 'd-goed' : 'd-let'}>{potKoers}</span></div>
                 <Balk pct={potPct} kleur={potKoers === 'op koers' ? 'var(--green)' : 'var(--orange)'} doel={tijdPct} />
-                <p className="d-voetnoot" style={{ margin: '8px 0 0' }}>Streepje = hoe ver de maand is ({pot.dagenVoorbij} van {pot.dagenInMaand} dagen, t/m {korteDag(pot.tot)}).{pot.terug ? ` Na ${eur(pot.terug)} terug via Tikkie.` : ''}</p>
+                <p className="d-voetnoot" style={{ margin: '8px 0 0' }}>
+                  {pot.stand ? `Vanaf jouw stand van ${korteDag(pot.stand.op)}: nog ${eur(pot.stand.over)} over${pot.stand.erna ? `, daarna ${eur(pot.stand.erna)} uitgegeven` : ''}. Nog over: ${eur(pot.budget - pot.op)}. ` : ''}
+                  Streepje = hoe ver de maand is ({pot.dagenVoorbij} van {pot.dagenInMaand} dagen, t/m {korteDag(pot.tot)}).{pot.terug ? ` Na ${eur(pot.terug)} terug via Tikkie.` : ''}</p>
               </div>
             </>
           )}
@@ -137,18 +139,18 @@ export function GeldPagina({ m }: PaginaProps) {
       <h2 className="d-h2" style={{ marginTop: 26 }}>Per maand</h2>
       <div className="d-lijst d-grafiek">
         <div className="d-seg" style={{ maxWidth: 360, marginBottom: 12 }}>
-          <button type="button" aria-selected={maandMaat === 'uit'} onClick={() => setMaandMaat('uit')}>Uitgaven</button>
+          <button type="button" aria-selected={maandMaat === 'inuit'} onClick={() => setMaandMaat('inuit')}>In en uit</button>
           <button type="button" aria-selected={maandMaat === 'eten'} onClick={() => setMaandMaat('eten')}>Uit eten + fastfood</button>
         </div>
         <div className="d-maandstaven">
           {maanden.map((x) => {
-            const w = maandMaat === 'uit' ? x.uit : x.uitEten + x.fastfood
+            const w = maandMaat === 'inuit' ? x.in - x.uit : x.uitEten + x.fastfood
             return (
               <div key={x.maand} title={`${MAAND[Number(x.maand.slice(5)) - 1]}: in ${eur(x.in)}, uit ${eur(x.uit)}, uit eten ${eur(x.uitEten)}, fastfood ${eur(x.fastfood)}`}>
-                <b className="d-num">{eur(w)}</b>
-                <span className="kolom">
-                  {maandMaat === 'uit'
-                    ? <i style={{ height: `${(w / maandMax) * 100}%`, background: 'var(--green)', opacity: x.compleet ? 1 : 0.45 }} />
+                <b className={`d-num ${maandMaat === 'inuit' ? (w >= 0 ? 'd-goed' : 'd-let') : ''}`}>{maandMaat === 'inuit' ? `${w >= 0 ? '+' : '−'}${eur(Math.abs(w))}` : eur(w)}</b>
+                <span className={maandMaat === 'inuit' ? 'kolom naast' : 'kolom'}>
+                  {maandMaat === 'inuit'
+                    ? <><i style={{ height: `${(x.in / maandMax) * 100}%`, background: 'var(--teal)', opacity: x.compleet ? 1 : 0.45 }} /><i style={{ height: `${(x.uit / maandMax) * 100}%`, background: 'var(--green)', opacity: x.compleet ? 1 : 0.45 }} /></>
                     : <><i style={{ height: `${(x.fastfood / maandMax) * 100}%`, background: 'var(--orange)' }} /><i style={{ height: `${(x.uitEten / maandMax) * 100}%`, background: 'var(--pink)' }} /></>}
                 </span>
                 <small>{MAAND[Number(x.maand.slice(5)) - 1]}</small>
@@ -156,13 +158,14 @@ export function GeldPagina({ m }: PaginaProps) {
             )
           })}
         </div>
+        {maandMaat === 'inuit' && <div className="d-legenda"><span><i className="d-blokje" style={{ background: 'var(--teal)' }} />inkomsten</span><span><i className="d-blokje" style={{ background: 'var(--green)' }} />uitgaven</span><span>getal = verschil (+ = over)</span></div>}
         {maandMaat === 'eten' && <div className="d-legenda"><span><i className="d-blokje" style={{ background: 'var(--pink)' }} />uit eten en drinken</span><span><i className="d-blokje" style={{ background: 'var(--orange)' }} />fastfood</span></div>}
         <p className="d-voetnoot" style={{ margin: '8px 0 0' }}>Een vage staaf = de maand is nog niet compleet in de afschriften.</p>
         <div className="d-lijst" style={{ boxShadow: 'none', marginTop: 10 }}>
           {[...maanden].reverse().slice(0, 6).map((x) => (
             <div key={x.maand} className="d-rij" style={{ paddingLeft: 0, paddingRight: 0 }}>
-              <span className="tekst">{MAAND[Number(x.maand.slice(5)) - 1]} {x.maand.slice(0, 4)}{!x.compleet && <span className="d-label">tot nu</span>}<small>in {eur(x.in)} · potjes {x.potjes < 0 ? '−' : '+'}{eur(Math.abs(x.potjes))} · uit eten {eur(x.uitEten)} · fastfood {eur(x.fastfood)}</small></span>
-              <span className="waarde">{eur(x.uit)}</span>
+              <span className="tekst">{MAAND[Number(x.maand.slice(5)) - 1]} {x.maand.slice(0, 4)}{!x.compleet && <span className="d-label">tot nu</span>}<small>potjes {x.potjes < 0 ? '−' : '+'}{eur(Math.abs(x.potjes))} · uit eten {eur(x.uitEten)} · fastfood {eur(x.fastfood)}</small></span>
+              <span className="waarde" style={{ textAlign: 'right' }}>in {eur(x.in)} · uit {eur(x.uit)}<br /><b className={x.in - x.uit >= 0 ? 'd-goed' : 'd-let'} style={{ fontSize: 13 }}>{x.in - x.uit >= 0 ? '+' : '−'}{eur(Math.abs(x.in - x.uit))}</b></span>
             </div>
           ))}
         </div>
